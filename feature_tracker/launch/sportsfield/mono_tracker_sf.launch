@@ -1,0 +1,10 @@
+<launch>
+    <arg name="config_path" default = "$(find feature_tracker)/../config/sportsfield/mono_config.yaml" />
+    
+    <node name="mono_tracker" pkg="feature_tracker" type="mono_tracker" output="screen">
+        <param name="config_file" type="string" value="$(arg config_path)" />
+    </node>
+
+
+
+</launch>

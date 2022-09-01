@@ -1,0 +1,48 @@
+%YAML:1.0
+# config for sportsfield
+
+# common parameters
+imu_topic: "/imu0"
+image_topic: "/cam1/image_raw"
+
+# camera calibration 
+model_type: MEI
+camera_name: camera
+image_width: 752
+image_height: 480
+mirror_parameters:
+   xi: 1.8476540167437447
+distortion_parameters:
+   k1: -0.06597811223735722
+   k2: 0.8559479340704287
+   p1: -0.0006445829733139821
+   p2: 0.0015137487236065916
+projection_parameters:
+   gamma1: 1338.1845333957547
+   gamma2: 1340.1190112672946
+   u0: 378.7909740462579
+   v0: 217.69105287172025
+
+# extrinsic
+extrinsicRotation: !!opencv-matrix        # R^{imu}_{cam}
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 0.9999014076382304, -0.0133731297219721, 0.0042818692791948,
+           0.0133731003056063, 0.9999105754655292, 0.0000355022536769,
+          -0.0042819611512717, 0.0000217631139403, 0.9999908321255077 ]
+extrinsicTranslation: !!opencv-matrix     # t^{imu}_{cam}
+   rows: 3
+   cols: 1
+   dt: d
+   data: [0.0341738532732442, -0.0032623030537933, -0.0017782029037505]
+   
+# feature tracker parameters
+max_cnt: 70        # max feature number in feature tracking
+min_dist: 45        # min distance between two features 
+freq: 0             # freq (Hz) of publishing tracking result. At least 10Hz for good
+                    # estimation. If set 0, the frequence will be the same as raw image 
+F_threshold: 1.0    # ransac threshold (pixel)
+show_track: 1       # publish tracking image as topic
+equalize: 1         # if image is too dark or light, 
+                    # turn on equalize to find enough features
