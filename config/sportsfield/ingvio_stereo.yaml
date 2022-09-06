@@ -1,0 +1,21 @@
+%YAML:1.0
+# config for sportsfield
+
+imu_topic: "/imu0"
+feature_topic: "/stereo_tracker/stereo_feature"
+
+cam_nums: 2
+cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_left_config.yaml"
+cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_right_config.yaml"
+
+max_sliding_window_poses: 20
+max_landmark_features: 25
+
+enable_gnss: 1
+
+noise_gyro: 0.005
+noise_accel: 0.05
+noise_bias_gyro: 0.001
+noise_bias_accel: 0.01
+noise_rcv_clockbias: 2.0
+noise_rcv_clockbias_randomwalk: 0.2

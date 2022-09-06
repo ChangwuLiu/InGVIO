@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="3">
+    
+    <name>ingvio_estimator</name>
+    <version>1.0.0</version>
+    <description>
+        Invariant filter for visual-inertial-GNSS fusion navigation.     
+    </description>
+    
+    <author email="cwliu529@163.com">Changwu Liu</author>
+    <maintainer email="cwliu529@163.com">Changwu Liu</maintainer>
+    
+    <license> TODO </license>
+    
+    <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+    <depend condition="$ROS_VERSION == 1">cmake_modules</depend>
+    
+    <depend condition="$ROS_VERSION == 1">roscpp</depend>
+    <depend condition="$ROS_VERSION == 1">roslib</depend>
+    <depend condition="$ROS_VERSION == 1">std_msgs</depend>
+    <depend condition="$ROS_VERSION == 1">message_filters</depend>
+    <depend condition="$ROS_VERSION == 1">sensor_msgs</depend>
+    <depend condition="$ROS_VERSION == 1">eigen_conversions</depend>
+    <depend condition="$ROS_VERSION == 1">geometry_msgs</depend>
+    <depend condition="$ROS_VERSION == 1">tf</depend>
+    <depend condition="$ROS_VERSION == 1">tf_conversions</depend>
+    <depend condition="$ROS_VERSION == 1">nav_msgs</depend>
+    <depend condition="$ROS_VERSION == 1">gnss_comm</depend>
+      
+    <depend condition="$ROS_VERSION == 1">gtest</depend>
+    
+    <export>
+        <build_type condition="$ROS_VERSION == 1">catkin</build_type>    
+    </export>
+    
+</package>
