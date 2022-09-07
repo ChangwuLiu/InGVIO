@@ -262,4 +262,152 @@ namespace ingvio
         
         assert(checkStateContinuity(state));
     }
+    
+    void StateManager::addAnchoredLandmarkInState(std::shared_ptr<State> state, std::shared_ptr<AnchoredLandmark> anchored_landmark, int lm_id, const Eigen::Matrix3d& cov)
+    {
+        if (state->_anchored_landmarks.find(lm_id) != state->_anchored_landmarks.end())
+        {
+            std::cout << "[StateManager]: Landmark already in the state, cannot add!" << std::endl;
+            return;
+        }
+        
+        state->_anchored_landmarks[lm_id] = anchored_landmark;
+        
+        StateManager::addVariableIndependent(state, anchored_landmark, cov);
+        
+        assert(StateManager::checkStateContinuity(state));
+    }
+    
+    void StateManager::margSlidingWindowPose(std::shared_ptr<State> state, double marg_time)
+    {
+        if (state->_sw_camleft_poses.find(marg_time) == state->_sw_camleft_poses.end())
+            std::cout << "[StateManager]: Marg pose time not exists! Cannot marg!" << std::endl;
+        
+        StateManager::marginalize(state, state->_sw_camleft_poses.at(marg_time));
+        
+        state->_sw_camleft_poses.erase(marg_time);
+        
+        assert(StateManager::checkStateContinuity(state));
+    }
+    
+    void StateManager::margSlidingWindowPose(std::shared_ptr<State> state)
+    {
+        double marg_time = state->nextMargTime();
+        if (marg_time == INFINITY)
+        {
+            std::cout << "[StateManager]: Auto marg pose gives inf time! Cannot marg!" << std::endl;
+            return;
+        }
+        
+        StateManager::margSlidingWindowPose(state, marg_time);
+    }
+    
+    void StateManager::margAnchoredLandmarkInState(std::shared_ptr<State> state, int lm_id)
+    {
+        if (state->_anchored_landmarks.find(lm_id) == state->_anchored_landmarks.end())
+        {
+            std::cout << "[StateManager]: Landmark id not exists in state! Cannot marg!" << std::endl;
+            return;
+        }
+        
+        StateManager::marginalize(state, state->_anchored_landmarks.at(lm_id));
+        
+        state->_anchored_landmarks.erase(lm_id);
+        
+        assert(StateManager::checkStateContinuity(state));
+    }
+    
+    void StateManager::ekfUpdate(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& var_order, const Eigen::MatrixXd& H, const Eigen::VectorXd& res, const Eigen::MatrixXd& R)
+    {
+        assert(res.rows() == R.rows());
+        assert(H.rows() == res.rows());
+        assert(R.rows() == R.cols());
+        
+        assert(StateManager::checkSubOrder(state, var_order));
+        
+        int small_idx = 0;
+        std::vector<int> H_idx;
+        
+        for (int i = 0; i < var_order.size(); ++i)
+        {
+            H_idx.push_back(small_idx);
+            
+            small_idx += var_order[i]->size();
+        }
+        
+        Eigen::MatrixXd PH_T(state->_cov.rows(), H.rows());
+       
+        PH_T.setZero();
+        
+        for (const auto& total_var : state->_err_variables)
+        {
+            Eigen::MatrixXd PH_T_i = Eigen::MatrixXd::Zero(total_var->size(), res.rows());
+            
+            for (int i = 0; i < var_order.size(); ++i)
+            {
+                std::shared_ptr<Type> meas_var = var_order[i];
+                
+                PH_T_i.noalias() += state->_cov.block(total_var->idx(), meas_var->idx(), total_var->size(), meas_var->size())*H.block(0, H_idx[i], H.rows(), meas_var->size()).transpose();
+            }
+            
+            PH_T.block(total_var->idx(), 0, total_var->size(), res.rows()) = PH_T_i;
+        }
+        
+        Eigen::MatrixXd small_cov = StateManager::getMarginalCov(state, var_order);
+        
+        Eigen::MatrixXd S(R.rows(), R.cols());
+        
+        S = H*small_cov*H.transpose() + R;
+        
+        Eigen::MatrixXd K = PH_T*S.inverse();
+        
+        Eigen::MatrixXd cov_tmp = state->_cov;
+        
+        cov_tmp -= K*PH_T.transpose();
+        
+        state->_cov = 0.5*(cov_tmp + cov_tmp.transpose());
+        
+        Eigen::VectorXd diags = state->_cov.diagonal();
+        
+        for (int i = 0; i < diags.rows(); ++i)
+            if (diags(i) < 0.0)
+            {
+                std::cout << "[StateManager]: EKF Update and found negative diag cov elements! " << std::endl;
+                
+                assert(false);
+            }
+            
+        Eigen::VectorXd dx = K*res;
+        
+        StateManager::boxPlus(state, dx);
+    }
+    
+    bool StateManager::checkSubOrder(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& sub_order)
+    {
+        auto isFound = [&state] (const std::shared_ptr<Type>& var)
+        {
+            return std::find(state->_err_variables.begin(), state->_err_variables.end(), var) !=  state->_err_variables.end();
+        };
+        
+        for (const auto& item : sub_order)
+            if (!isFound(item))
+            {
+                std::cout << "[StateManager]: Existing sub order var not in state! " << std::endl;
+                
+                return false;
+            }
+                
+        return true;
+    }
+    
+    int StateManager::calcSubVarSize(const std::vector<std::shared_ptr<Type>>& sub_var)
+    {
+        int total_size = 0;
+        
+        for (const auto& item : sub_var)
+            if (item != nullptr)
+                total_size += item->size();
+        
+        return total_size;
+    }
 }

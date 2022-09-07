@@ -146,6 +146,16 @@ namespace ingvio
         const Eigen::Vector3d& valueTrans() const
         { return _vec; }
         
+        Eigen::Isometry3d copyValueAsIso() const
+        {
+            Eigen::Isometry3d result;
+            result.setIdentity();
+            result.linear() = _rot;
+            result.translation() = _vec;
+            
+            return result;
+        }
+        
         const Eigen::Quaterniond& fejLinearAsQuat() const
         { return _q_fej; }
         
@@ -154,6 +164,16 @@ namespace ingvio
         
         const Eigen::Vector3d& fejTrans() const
         { return _vec_fej; }
+        
+        Eigen::Isometry3d copyFejAsIso() const
+        {
+            Eigen::Isometry3d result;
+            result.setIdentity();
+            result.linear() = _rot_fej;
+            result.translation() = _vec_fej;
+            
+            return result;
+        }
         
         void setValueLinearByQuat(const Eigen::Quaterniond& other_quat)
         {
@@ -288,6 +308,16 @@ namespace ingvio
         const Eigen::Vector3d& valueTrans2() const
         { return _vec2; }
         
+        Eigen::Isometry3d copyValueAsIso() const
+        {
+            Eigen::Isometry3d result;
+            result.setIdentity();
+            result.linear() = _rot;
+            result.translation() = _vec1;
+            
+            return result;
+        }
+        
         const Eigen::Quaterniond& fejLinearAsQuat() const
         { return _q_fej; }
         
@@ -299,6 +329,16 @@ namespace ingvio
         
         const Eigen::Vector3d& fejTrans2() const
         { return _vec2_fej; }
+        
+        Eigen::Isometry3d copyFejAsIso() const
+        {
+            Eigen::Isometry3d result;
+            result.setIdentity();
+            result.linear() = _rot_fej;
+            result.translation() = _vec1_fej;
+            
+            return result;
+        }
         
         void setValueLinearByQuat(const Eigen::Quaterniond& other_quat)
         {

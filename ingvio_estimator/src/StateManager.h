@@ -34,5 +34,19 @@ namespace ingvio
         static void boxPlus(std::shared_ptr<State> state, const Eigen::VectorXd& dx);
         
         static void augmentSlidingWindowPose(std::shared_ptr<State> state);
+        
+        static void addAnchoredLandmarkInState(std::shared_ptr<State> state, std::shared_ptr<AnchoredLandmark> anchored_landmark, int lm_id, const Eigen::Matrix3d& cov);
+        
+        static void margSlidingWindowPose(std::shared_ptr<State> state, double marg_time);
+        
+        static void margSlidingWindowPose(std::shared_ptr<State> state);
+        
+        static void margAnchoredLandmarkInState(std::shared_ptr<State> state, int lm_id);
+        
+        static void ekfUpdate(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& var_order, const Eigen::MatrixXd& H, const Eigen::VectorXd& res, const Eigen::MatrixXd& R);
+        
+        static bool checkSubOrder(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& sub_order);
+        
+        static int calcSubVarSize(const std::vector<std::shared_ptr<Type>>& sub_var);
     };
 }

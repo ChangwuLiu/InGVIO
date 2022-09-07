@@ -93,10 +93,10 @@ namespace ingvio
         
         static void switchRepXyz2Bear(const Eigen::Vector3d& xyz, Eigen::Vector3d& bear)
         {
-            double depth = xyz.norm();
+            double r = xyz.norm();
             
-            assert(depth != 0.0);
-            double rho = 1.0/depth;
+            assert(r != 0.0);
+            double rho = 1.0/r;
             bear.z() = rho;
             bear.x() = std::atan2(xyz.y(), xyz.x());
             bear.y() = std::acos(rho*xyz.z());
@@ -108,10 +108,10 @@ namespace ingvio
             if (bear.z() < 0)
                 std::cout << "[AnchoredLandmark]: Warning bear.z() < 0 !" << std::endl;
             
-            double depth = 1.0/bear.z();
-            xyz.z() = std::cos(bear.y())*depth;
-            xyz.x() = depth*std::cos(bear.x())*std::sin(bear.y());
-            xyz.y() = depth*std::sin(bear.x())*std::sin(bear.y());
+            double r = 1.0/bear.z();
+            xyz.z() = r*std::cos(bear.y());
+            xyz.x() = r*std::cos(bear.x())*std::sin(bear.y());
+            xyz.y() = r*std::sin(bear.x())*std::sin(bear.y());
         }
         
         void resetAnchoredPose(std::shared_ptr<SE3> new_anchored_pose = nullptr)

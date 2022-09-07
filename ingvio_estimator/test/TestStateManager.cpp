@@ -231,6 +231,309 @@ namespace ingvio_test
         ASSERT_NEAR((state->_extended_pose->valueLinearAsMat()*state->_camleft_imu_extrinsics->valueLinearAsMat()-state->_sw_camleft_poses[3.0]->valueLinearAsMat()).norm(), 0.0, 1e-08);
         ASSERT_NEAR((state->_extended_pose->valueTrans1()+state->_extended_pose->valueLinearAsMat()*state->_camleft_imu_extrinsics->valueTrans()-state->_sw_camleft_poses[3.0]->valueTrans()).norm(), 0.0, 1e-08);
     }
+    
+    TEST_F(StateUpdateTest, stateBoxPlus)
+    {
+        
+        Eigen::Vector3d x1, x2, x3;
+        x1.setRandom();
+        x1.z() = std::fabs(x1.z());
+        x1.head<2>().normalize();
+        AnchoredLandmark::switchRepBear2Xyz(x1, x2);
+        AnchoredLandmark::switchRepXyz2Bear(x2, x3);
+        ASSERT_NEAR(x1.z()-x3.z(), 0.0, 1e-08);
+        ASSERT_NEAR(std::fabs(x1.y()), std::fabs(x3.y()), 1e-08);
+        ASSERT_TRUE(std::fabs(x1.x()-x3.x()) < 1e-08 || std::fabs(std::fabs(x1.x()-x3.x())-M_PI) < 1e-08);
+        
+        x1.setRandom();
+        x1.z() = std::fabs(x1.z());
+        AnchoredLandmark::switchRepXyz2Bear(x1, x2);
+        AnchoredLandmark::switchRepBear2Xyz(x2, x3);
+        ASSERT_NEAR((x1-x3).norm(), 0.0, 1e-08);
+        
+        x1.setRandom();
+        x1.z() = std::fabs(x1.z());
+        AnchoredLandmark::switchRepXyz2Invd(x1, x2);
+        AnchoredLandmark::switchRepInvd2Xyz(x2, x3);
+        ASSERT_NEAR((x1-x3).norm(), 0.0, 1e-08);
+        
+        x1.setRandom();
+        x1.z() = std::fabs(x1.z());
+        AnchoredLandmark::switchRepInvd2Xyz(x1, x2);
+        AnchoredLandmark::switchRepXyz2Invd(x2, x3);
+        ASSERT_NEAR((x1-x3).norm(), 0.0, 1e-08);
+        
+        this->state->_timestamp = 1.0;
+        
+        StateManager::propagateStateCov(this->state, this->Phi_imu, this->G_imu, 1.5);
+        
+        state->_timestamp = 2.5;
+        
+        StateManager::augmentSlidingWindowPose(state);
+        
+        std::shared_ptr<AnchoredLandmark> lm1(new AnchoredLandmark());
+        
+        lm1->resetAnchoredPose(state->_sw_camleft_poses.at(2.5));
+        lm1->setRepType(AnchoredLandmark::LmRep::BEARING);
+        
+        Eigen::Vector3d tmp = Eigen::Vector3d::Random();
+        tmp.z() = std::fabs(tmp.z());
+        tmp.topRows<2>().normalize();
+        lm1->setValuePosRep(tmp);
+        
+        StateManager::addAnchoredLandmarkInState(state, lm1, 5, 10.0*Eigen::Matrix3d::Identity());
+        
+        Eigen::Vector3d bodyXYZ;
+        bodyXYZ.z() = 1.0/tmp.z()*std::cos(tmp.y());
+        bodyXYZ.x() = 1.0/tmp.z()*std::cos(tmp.x())*std::sin(tmp.y());
+        bodyXYZ.y() = 1.0/tmp.z()*std::sin(tmp.x())*std::sin(tmp.y());
+        
+        Eigen::Vector3d worldXYZ = state->_sw_camleft_poses.at(2.5)->valueLinearAsMat()*bodyXYZ + state->_sw_camleft_poses.at(2.5)->valueTrans();
+        
+        ASSERT_NEAR((worldXYZ-lm1->valuePosXyz()).norm(), 0.0, 1e-8);
+        ASSERT_NEAR((worldXYZ-state->_anchored_landmarks.at(5)->valuePosXyz()).norm(), 0.0, 1e-08);
+        
+        StateManager::propagateStateCov(this->state, this->Phi_imu, this->G_imu, 0.5);
+        
+        state->_timestamp = 3.0;
+        
+        StateManager::augmentSlidingWindowPose(state);
+        
+        std::shared_ptr<AnchoredLandmark> lm2(new AnchoredLandmark());
+        
+        lm2->resetAnchoredPose(state->_sw_camleft_poses.at(3.0));
+        lm2->setRepType(AnchoredLandmark::LmRep::INV_DEPTH);
+        
+        tmp = Eigen::Vector3d::Random();
+        tmp.z() = std::fabs(tmp.z());
+        lm2->setValuePosRep(tmp);
+        
+        StateManager::addAnchoredLandmarkInState(state, lm2, 6, 12.0*Eigen::Matrix3d::Identity());
+        
+        bodyXYZ.x() = tmp.x()/tmp.z();
+        bodyXYZ.y() = tmp.y()/tmp.z();
+        bodyXYZ.z() = 1.0/tmp.z();
+        
+        worldXYZ = state->_sw_camleft_poses.at(3.0)->copyValueAsIso()*bodyXYZ;
+        ASSERT_NEAR((worldXYZ-lm2->valuePosXyz()).norm(), 0.0, 1e-08);
+        ASSERT_NEAR((worldXYZ-state->_anchored_landmarks.at(6)->valuePosXyz()).norm(), 0.0, 1e-08);
+        
+        Eigen::Matrix3d R_hat = state->_extended_pose->valueLinearAsMat();
+        Eigen::Vector3d p_hat = state->_extended_pose->valueTrans1();
+        Eigen::Vector3d v_hat = state->_extended_pose->valueTrans2();
+
+        Eigen::Vector3d bg_hat = state->_bg->value();
+        Eigen::Vector3d ba_hat = state->_ba->value();
+
+        Eigen::Matrix3d R_ext_hat = state->_camleft_imu_extrinsics->valueLinearAsMat();
+        Eigen::Vector3d p_ext_hat = state->_camleft_imu_extrinsics->valueTrans();
+        
+        double t_gps_hat = state->_gnss.at(State::GNSSType::GPS)->value();
+        double t_bds_hat = state->_gnss.at(State::GNSSType::BDS)->value();
+        double fs_hat = state->_gnss.at(State::GNSSType::FS)->value();
+        double yof_hat = state->_gnss.at(State::GNSSType::YOF)->value();
+        
+        Eigen::Matrix3d R_c1_hat = state->_sw_camleft_poses.at(2.5)->valueLinearAsMat();
+        Eigen::Vector3d p_c1_hat = state->_sw_camleft_poses.at(2.5)->valueTrans();
+        
+        Eigen::Matrix3d R_c2_hat = state->_sw_camleft_poses.at(3.0)->valueLinearAsMat();
+        Eigen::Vector3d p_c2_hat = state->_sw_camleft_poses.at(3.0)->valueTrans();
+        
+        Eigen::Vector3d pf1_hat = state->_anchored_landmarks.at(5)->valuePosXyz();
+        Eigen::Vector3d pf2_hat = state->_anchored_landmarks.at(6)->valuePosXyz();
+        
+        const int rows = state->curr_cov_size();
+        Eigen::VectorXd dx(rows);
+        dx.setRandom();
+        
+        const Eigen::Vector3d& delta_theta = dx.block<3, 1>(0, 0);
+        const Eigen::Vector3d& delta_p = dx.block<3, 1>(3, 0);
+        const Eigen::Vector3d& delta_v = dx.block<3, 1>(6, 0);
+       
+        const Eigen::Vector3d& delta_bg = dx.block<3, 1>(9, 0);
+        const Eigen::Vector3d& delta_ba = dx.block<3, 1>(12, 0);
+        
+        const Eigen::Vector3d& delta_theta_ext = dx.block<3, 1>(15, 0);
+        const Eigen::Vector3d& delta_p_ext = dx.block<3, 1>(18, 0);
+        
+        const double& delta_t_gps = dx(21);
+        const double& delta_yof = dx(22);
+        const double& delta_fs = dx(23);
+        const double& delta_t_bds = dx(24);
+        
+        const Eigen::Vector3d& delta_theta_c1 = dx.block<3, 1>(25, 0);
+        const Eigen::Vector3d& delta_p_c1 = dx.block<3, 1>(28, 0);
+        
+        const Eigen::Vector3d& delta_pf1 = dx.block<3, 1>(31, 0);
+        
+        const Eigen::Vector3d& delta_theta_c2 = dx.block<3, 1>(34, 0);
+        const Eigen::Vector3d& delta_p_c2 = dx.block<3, 1>(37, 0);
+        
+        const Eigen::Vector3d& delta_pf2 = dx.block<3, 1>(40, 0);
+        
+        Eigen::Matrix3d R = GammaFunc(delta_theta, 0)*R_hat;
+        Eigen::Vector3d p = GammaFunc(delta_theta, 0)*p_hat + GammaFunc(delta_theta, 1)*delta_p;
+        Eigen::Vector3d v = GammaFunc(delta_theta, 0)*v_hat + GammaFunc(delta_theta, 1)*delta_v;
+        
+        Eigen::Vector3d bg = bg_hat + delta_bg;
+        Eigen::Vector3d ba = ba_hat + delta_ba;
+        
+        Eigen::Matrix3d R_ext = GammaFunc(delta_theta_ext, 0)*R_ext_hat;
+        Eigen::Vector3d p_ext = GammaFunc(delta_theta_ext, 0)*p_ext_hat + GammaFunc(delta_theta_ext, 1)*delta_p_ext;
+        
+        double t_gps = t_gps_hat + delta_t_gps;
+        double t_bds = t_bds_hat + delta_t_bds;
+        double yof = yof_hat + delta_yof;
+        double fs = fs_hat + delta_fs;
+        
+        Eigen::Matrix3d R_c1 = GammaFunc(delta_theta_c1, 0)*R_c1_hat;
+        Eigen::Vector3d p_c1 = GammaFunc(delta_theta_c1, 0)*p_c1_hat + GammaFunc(delta_theta_c1, 1)*delta_p_c1;
+        
+        Eigen::Matrix3d R_c2 = GammaFunc(delta_theta_c2, 0)*R_c2_hat;
+        Eigen::Vector3d p_c2 = GammaFunc(delta_theta_c2, 0)*p_c2_hat + GammaFunc(delta_theta_c2, 1)*delta_p_c2;
+        
+        Eigen::Vector3d pf1 = GammaFunc(delta_theta_c1, 0)*pf1_hat + GammaFunc(delta_theta_c1, 1)*delta_pf1;
+        
+        Eigen::Vector3d pf2 = GammaFunc(delta_theta_c2, 0)*pf2_hat + GammaFunc(delta_theta_c2, 1)*delta_pf2;
+        
+        StateManager::boxPlus(state, dx);
+        
+        auto isMatNear = [](const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2)
+        {
+            assert(mat1.rows() == mat2.rows());
+            assert(mat1.cols() == mat2.cols());
+            
+            if ((mat1-mat2).norm() < 1e-08)
+                return true;
+            else return false;
+        };
+        
+        ASSERT_TRUE(isMatNear(R, state->_extended_pose->valueLinearAsMat()));
+        ASSERT_TRUE(isMatNear(p, state->_extended_pose->valueTrans1()));
+        ASSERT_TRUE(isMatNear(v, state->_extended_pose->valueTrans2()));
+        
+        ASSERT_TRUE(isMatNear(bg, state->_bg->value()));
+        ASSERT_TRUE(isMatNear(ba, state->_ba->value()));
+        
+        ASSERT_TRUE(isMatNear(R_ext, state->_camleft_imu_extrinsics->valueLinearAsMat()));
+        ASSERT_TRUE(isMatNear(p_ext, state->_camleft_imu_extrinsics->valueTrans()));
+        
+        ASSERT_NEAR(t_gps, state->_gnss.at(State::GNSSType::GPS)->value(), 1e-08);
+        ASSERT_NEAR(t_bds, state->_gnss.at(State::GNSSType::BDS)->value(), 1e-08);
+        ASSERT_NEAR(yof, state->_gnss.at(State::GNSSType::YOF)->value(), 1e-08);
+        ASSERT_NEAR(fs, state->_gnss.at(State::GNSSType::FS)->value(), 1e-08);
+        
+        ASSERT_TRUE(isMatNear(R_c1, state->_sw_camleft_poses.at(2.5)->valueLinearAsMat()));
+        ASSERT_TRUE(isMatNear(p_c1, state->_sw_camleft_poses.at(2.5)->valueTrans()));
+        
+        ASSERT_TRUE(isMatNear(R_c2, state->_sw_camleft_poses.at(3.0)->valueLinearAsMat()));
+        ASSERT_TRUE(isMatNear(p_c2, state->_sw_camleft_poses.at(3.0)->valueTrans()));
+        
+        ASSERT_TRUE(isMatNear(pf1, state->_anchored_landmarks.at(5)->valuePosXyz()));
+        ASSERT_TRUE(isMatNear(pf2, state->_anchored_landmarks.at(6)->valuePosXyz()));
+        
+        pf1 += delta_pf1;
+        pf2 += delta_pf2;
+        
+        state->_anchored_landmarks.at(5)->resetAnchoredPose();
+        state->_anchored_landmarks.at(6)->resetAnchoredPose();
+        
+        StateManager::boxPlus(state, dx);
+        
+        ASSERT_TRUE(isMatNear(pf1, state->_anchored_landmarks.at(5)->valuePosXyz()));
+        ASSERT_TRUE(isMatNear(pf2, state->_anchored_landmarks.at(6)->valuePosXyz()));
+        
+        StateManager::margAnchoredLandmarkInState(state, 5);
+        StateManager::margAnchoredLandmarkInState(state, 6);
+        StateManager::margSlidingWindowPose(state);
+        StateManager::margSlidingWindowPose(state, 3.0);
+        StateManager::margSlidingWindowPose(state, 2.5);
+        
+        ASSERT_TRUE(state->curr_cov_size() == 25);
+        ASSERT_TRUE(StateManager::checkStateContinuity(state));
+    }
+    
+    TEST_F(StateUpdateTest, stateCovUpdate)
+    {
+        this->state->_timestamp = 1.0;
+        
+        StateManager::propagateStateCov(this->state, this->Phi_imu, this->G_imu, 1.5);
+        
+        state->_timestamp = 2.5;
+        
+        StateManager::augmentSlidingWindowPose(state);
+        
+        std::shared_ptr<AnchoredLandmark> lm1(new AnchoredLandmark());
+        
+        lm1->resetAnchoredPose(state->_sw_camleft_poses.at(2.5));
+        lm1->setRepType(AnchoredLandmark::LmRep::BEARING);
+        
+        Eigen::Vector3d tmp = Eigen::Vector3d::Random();
+        tmp.z() = std::fabs(tmp.z());
+        tmp.topRows<2>().normalize();
+        lm1->setValuePosRep(tmp);
+        
+        StateManager::addAnchoredLandmarkInState(state, lm1, 5, 10.0*Eigen::Matrix3d::Identity());
+        
+        std::vector<std::shared_ptr<Type>> var_order;
+        var_order.push_back(state->_extended_pose);
+        var_order.push_back(state->_gnss.at(State::GNSSType::GPS));
+        var_order.push_back(state->_gnss.at(State::GNSSType::BDS));
+        var_order.push_back(state->_gnss.at(State::GNSSType::FS));
+        
+        int var_size = StateManager::calcSubVarSize(var_order);
+        
+        Eigen::VectorXd res(6);
+        res.setRandom();
+        
+        Eigen::MatrixXd H(res.rows(), var_size);
+        H.setZero();
+        
+        H.block<6, 3>(0, 0).setRandom();
+        H.block<3, 3>(0, 3).setRandom();
+        H.block<3, 3>(3, 6).setRandom();
+        
+        H(0, 9) = 1.0;
+        H(1, 9) = 1.0;
+        H(2, 10) = 1.0;
+        
+        H.block<3, 1>(3, 11).setOnes();
+        
+        Eigen::MatrixXd H_large(res.rows(), state->curr_cov_size());
+        
+        H_large.setZero();
+        
+        H_large.block<6, 9>(0, 0) = H.block<6, 9>(0, 0);
+        
+        H_large(0, state->_gnss.at(State::GNSSType::GPS)->idx()) = 1.0;
+        H_large(1, state->_gnss.at(State::GNSSType::GPS)->idx()) = 1.0;
+        H_large(2, state->_gnss.at(State::GNSSType::BDS)->idx()) = 1.0;
+        
+        H_large.block<3, 1>(3, state->_gnss.at(State::GNSSType::FS)->idx()).setOnes();
+        
+        Eigen::MatrixXd cov_orig = StateManager::getFullCov(state);
+        
+        auto isMatNear = [](const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2)
+        {
+            assert(mat1.rows() == mat2.rows());
+            assert(mat1.cols() == mat2.cols());
+            
+            if ((mat1-mat2).norm() < 1e-08)
+                return true;
+            else return false;
+        };
+        
+        Eigen::MatrixXd R = 0.5*Eigen::MatrixXd::Identity(res.rows(), res.rows());
+        
+        StateManager::ekfUpdate(state, var_order, H, res, R);
+        
+        Eigen::MatrixXd K = cov_orig*H_large.transpose()*(H_large*cov_orig*H_large.transpose() + R).inverse();
+        
+        Eigen::MatrixXd cov_ref = (Eigen::MatrixXd::Identity(cov_orig.rows(), cov_orig.cols())-K*H_large)*cov_orig;
+        
+        ASSERT_TRUE(isMatNear(cov_ref, StateManager::getFullCov(state)));
+        
+    }
 
 }
 
