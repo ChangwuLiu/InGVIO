@@ -48,5 +48,9 @@ namespace ingvio
         static bool checkSubOrder(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& sub_order);
         
         static int calcSubVarSize(const std::vector<std::shared_ptr<Type>>& sub_var);
+        
+        static void addVariableDelayedInvertible(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, const Eigen::MatrixXd& H_old, const Eigen::MatrixXd& H_new, const Eigen::VectorXd& res, double noise_iso_meas);
+        
+        static void addVariableDelayed(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, Eigen::MatrixXd& H_old, Eigen::MatrixXd& H_new, Eigen::VectorXd& res, double noise_iso_meas, double chi2_mult_factor, bool do_chi2 = true);
     };
 }

@@ -43,10 +43,23 @@ namespace ingvio
         _noise_bg = fs["noise_bias_gyro"];
         _noise_ba = fs["noise_bias_accel"];
         
+        _init_cov_rot = fs["init_cov_rot"];
+        _init_cov_pos = fs["init_cov_pos"];
+        _init_cov_vel = fs["init_cov_vel"];
+        _init_cov_bg = fs["init_cov_bg"];
+        _init_cov_ba = fs["init_cov_ba"];
+        _init_cov_ext_rot = fs["init_cov_ext_rot"];
+        _init_cov_ext_pos = fs["init_cov_ext_pos"];
+    
+        
         if (_enable_gnss)
         {
             _noise_clockbias = fs["noise_rcv_clockbias"];
             _noise_cb_rw = fs["noise_rcv_clockbias_randomwalk"];
+            
+            _init_cov_rcv_clockbias = fs["init_cov_rcv_clockbias"];
+            _init_cov_rcv_clockbias_randomwalk = fs["init_cov_rcv_clockbias_randomwalk"];
+            _init_cov_yof = fs["init_cov_yof"];
         }
         
         
@@ -131,7 +144,28 @@ namespace ingvio
             std::cout << "noise_rcv_clockbias_randomwalk: " << _noise_cb_rw << std::endl;
         }
         
+        std::cout << "init_cov_rot: " << _init_cov_rot << std::endl;
         
+        std::cout << "init_cov_pos: " << _init_cov_pos << std::endl;
+        
+        std::cout << "init_cov_vel: " << _init_cov_vel << std::endl;
+        
+        std::cout << "init_cov_bg: " << _init_cov_bg << std::endl;
+        
+        std::cout << "init_cov_ba: " << _init_cov_ba << std::endl;
+        
+        std::cout << "init_cov_ext_rot: " << _init_cov_ext_rot << std::endl;
+        
+        std::cout << "init_cov_ext_pos: " << _init_cov_ext_pos << std::endl;
+  
+        if (_enable_gnss)
+        {
+            std::cout << "init_cov_rcv_clockbias: " << _init_cov_rcv_clockbias << std::endl;
+            
+            std::cout << "init_cov_rcv_clockbias_randomwalk: " << _init_cov_rcv_clockbias_randomwalk << std::endl;
+        
+            std::cout << "init_cov_yof: " << _init_cov_yof << std::endl;
+        }
         
         std::cout << "===============================" << std::endl;
         

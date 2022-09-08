@@ -17,12 +17,15 @@ find_package(catkin QUIET COMPONENTS
 catkin_package(
     CATKIN_DEPENDS roscpp roslib std_msgs message_filters sensor_msgs eigen_conversions geometry_msgs tf tf_conversions nav_msgs gnss_comm
     INCLUDE_DIRS src/
+    DEPENDS OpenCV SUITESPARSE Boost
 )
 
 include_directories(
     src
     ${EIGEN3_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
+    ${SUITESPARSE_INCLUDE_DIRS}
 )
 
 add_executable(ingvio 
@@ -31,7 +34,9 @@ add_executable(ingvio
 
 list(APPEND thirdparty_libs 
     ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    ${SUITESPARSE_LIBRARIES}
 )
 target_link_libraries(ingvio
     ${thirdparty_libs}

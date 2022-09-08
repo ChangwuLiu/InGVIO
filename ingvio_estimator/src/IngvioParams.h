@@ -42,6 +42,17 @@ namespace ingvio
         double _noise_clockbias;
         double _noise_cb_rw;
         
+        double _init_cov_rot;
+        double _init_cov_pos;
+        double _init_cov_vel;
+        double _init_cov_bg;
+        double _init_cov_ba;
+        double _init_cov_ext_rot;
+        double _init_cov_ext_pos;
+        double _init_cov_rcv_clockbias;
+        double _init_cov_rcv_clockbias_randomwalk;
+        double _init_cov_yof;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         

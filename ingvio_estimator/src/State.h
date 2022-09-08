@@ -32,9 +32,21 @@ namespace ingvio
         double _noise_clockbias = 2.0;
         double _noise_cb_rw = 0.2;
         
+        double _init_cov_rot;
+        double _init_cov_pos;
+        double _init_cov_vel;
+        double _init_cov_bg;
+        double _init_cov_ba;
+        double _init_cov_ext_rot;
+        double _init_cov_ext_pos;
+        double _init_cov_rcv_clockbias;
+        double _init_cov_rcv_clockbias_randomwalk;
+        double _init_cov_yof;
+        
         bool _enable_gnss = true;
         
         Eigen::Isometry3d _T_cl2cr = Eigen::Isometry3d::Identity();
+        Eigen::Isometry3d _T_cl2i = Eigen::Isometry3d::Identity();
     };
     
     class State
@@ -58,6 +70,10 @@ namespace ingvio
                 
             return time;
         }
+        
+        void initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos = Eigen::Vector3d::Zero());
+        
+        void initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba);
         
         int curr_cov_size() { return _cov.rows(); }
         int curr_err_variable_size() { return _err_variables.size();}

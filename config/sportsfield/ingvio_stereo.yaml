@@ -19,3 +19,14 @@ noise_bias_gyro: 0.001
 noise_bias_accel: 0.01
 noise_rcv_clockbias: 2.0
 noise_rcv_clockbias_randomwalk: 0.2
+
+init_cov_rot: 0.05
+init_cov_pos: 0.1
+init_cov_vel: 0.5
+init_cov_bg: 0.01
+init_cov_ba: 0.08
+init_cov_ext_rot: 8e-03
+init_cov_ext_pos: 5e-04
+init_cov_rcv_clockbias: 3.0
+init_cov_rcv_clockbias_randomwalk: 1.0
+init_cov_yof: 0.03

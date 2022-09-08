@@ -1,3 +1,5 @@
+#include <boost/math/distributions/chi_squared.hpp>
+
 #include "StateManager.h"
 
 namespace ingvio
@@ -409,5 +411,154 @@ namespace ingvio
                 total_size += item->size();
         
         return total_size;
+    }
+    
+    void StateManager::addVariableDelayedInvertible(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, const Eigen::MatrixXd& H_old, const Eigen::MatrixXd& H_new, const Eigen::VectorXd& res, double noise_iso_meas)
+    {
+        if (std::find(state->_err_variables.begin(), state->_err_variables.end(), var_new) != state->_err_variables.end())
+        {
+            std::cout << "[StateManager]: New var already in state! Cannot perform add var delayed inv!" << std::endl;
+            return;
+        }
+        
+        assert(StateManager::checkSubOrder(state, var_old_order));
+        
+        int old_sub_var_size = StateManager::calcSubVarSize(var_old_order);
+        
+        assert(res.rows() == H_old.rows());
+        assert(res.rows() == H_new.rows());
+        assert(H_new.rows() == H_new.cols());
+        assert(H_new.cols() == var_new->size());
+        assert(H_old.cols() == old_sub_var_size);
+        
+        assert(H_new.determinant() != 0);
+        
+        int small_idx = 0;
+        std::vector<int> H_idx;
+        
+        for (int i = 0; i < var_old_order.size(); ++i)
+        {
+            H_idx.push_back(small_idx);
+            small_idx += var_old_order[i]->size();
+        }
+        
+        Eigen::MatrixXd PH_T = Eigen::MatrixXd::Zero(state->_cov.rows(), res.rows());
+        
+        for (int i = 0; i < state->_err_variables.size(); ++i)
+        {
+            Eigen::MatrixXd PH_T_i = Eigen::MatrixXd::Zero(state->_err_variables[i]->size(), res.rows());
+            
+            for (int j = 0; j < var_old_order.size(); ++j)
+            {
+                std::shared_ptr<Type> meas_var = var_old_order[j];
+                
+                PH_T_i += state->_cov.block(state->_err_variables[i]->idx(), meas_var->idx(), state->_err_variables[i]->size(), meas_var->size())*H_old.block(0, H_idx[j], H_old.rows(), meas_var->size()).transpose();
+            }
+            
+            PH_T.block(state->_err_variables[i]->idx(), 0, state->_err_variables[i]->size(), res.rows()) = PH_T_i;
+        }
+        
+        Eigen::MatrixXd small_cov = StateManager::getMarginalCov(state, var_old_order);
+        
+        Eigen::MatrixXd S(res.rows(), res.rows());
+        
+        S = H_old*small_cov*H_old.transpose();
+        
+        for (int i = 0; i < S.cols(); ++i)
+            S(i, i) += std::pow(noise_iso_meas, 2.0);
+        
+        Eigen::MatrixXd H_new_inv = H_new.inverse();
+        
+        Eigen::MatrixXd cov_newnew = H_new_inv*S*H_new_inv.transpose();
+        
+        Eigen::MatrixXd cov_tmp = Eigen::MatrixXd::Zero(state->_cov.rows() + var_new->size(), state->_cov.cols() + var_new->size());
+        
+        cov_tmp.block(0, 0, state->_cov.rows(), state->_cov.cols()) = state->_cov;
+        
+        cov_tmp.block(state->_cov.rows(), state->_cov.cols(), var_new->size(), var_new->size()) = cov_newnew;
+        
+        cov_tmp.block(0, state->_cov.cols(), state->_cov.rows(), var_new->size()) = -PH_T*H_new_inv.transpose();
+        
+        cov_tmp.block(state->_cov.rows(), 0, var_new->size(), state->_cov.cols()) = cov_tmp.block(0, state->_cov.cols(), state->_cov.rows(), var_new->size()).transpose();
+        
+        var_new->set_cov_idx(state->_cov.cols());
+        
+        state->_err_variables.push_back(var_new);
+        
+        state->_cov = 0.5*(cov_tmp + cov_tmp.transpose());
+    }
+    
+    void StateManager::addVariableDelayed(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, Eigen::MatrixXd& H_old, Eigen::MatrixXd& H_new, Eigen::VectorXd& res, double noise_iso_meas, double chi2_mult_factor, bool do_chi2)
+    {
+        if (std::find(state->_err_variables.begin(), state->_err_variables.end(), var_new) != state->_err_variables.end())
+        {
+            std::cout << "[StateManager]: New var already in state! Cannot perform add var delayed inv!" << std::endl;
+            return;
+        }
+        
+        int old_sub_var_size = StateManager::calcSubVarSize(var_old_order);
+        int new_var_size = var_new->size();
+        
+        assert(StateManager::checkSubOrder(state, var_old_order));
+        
+        assert(res.rows() == H_old.rows());
+        assert(res.rows() == H_new.rows());
+
+        assert(H_new.cols() == new_var_size);
+        assert(H_old.cols() == old_sub_var_size);
+        
+        if (H_new.rows() <= H_new.cols())
+        {
+            std::cout << "[StateManager]: H_new rows should be larger than H_new cols!" << std::endl;
+            return;
+        }
+        
+        Eigen::JacobiRotation<double> tmpG;
+        
+        for (int n = 0; n < H_new.cols(); ++n)
+            for (int m = H_new.rows()-1; m > n; --m)
+            {
+                tmpG.makeGivens(H_new(m-1, n), H_new(m, n));
+                
+                (H_new.block(m-1, n, 2, H_new.cols()-n)).applyOnTheLeft(0, 1,tmpG.adjoint());
+                
+                (res.block(m-1, 0, 2, 1)).applyOnTheLeft(0, 1, tmpG.adjoint());
+                
+                (H_old.block(m-1, 0, 2, H_old.cols())).applyOnTheLeft(0, 1, tmpG.adjoint());
+            }
+        
+        Eigen::MatrixXd Hxinit = H_old.block(0, 0, new_var_size, H_old.cols());
+        
+        Eigen::MatrixXd Hfinit = H_new.block(0, 0, new_var_size, new_var_size);
+        
+        Eigen::VectorXd resinit = res.block(0, 0, new_var_size, 1);
+        
+        Eigen::MatrixXd Hup = H_old.block(new_var_size, 0, H_old.rows()-new_var_size, H_old.cols());
+        
+        Eigen::VectorXd resup = res.block(new_var_size, 0, res.rows()-new_var_size, 1);
+        
+        Eigen::MatrixXd small_cov = StateManager::getMarginalCov(state, var_old_order);
+        
+        Eigen::MatrixXd S = Hup*small_cov*Hup.transpose();
+        
+        for (int i = 0; i < S.rows(); ++i)
+            S(i, i) += std::pow(noise_iso_meas, 2.0);
+        
+        double chi2 = resup.dot(S.llt().solve(resup));
+        
+        boost::math::chi_squared chi_squared_dist(res.rows());
+        
+        double chi2_check = boost::math::quantile(chi_squared_dist, 0.95);
+        
+        if (chi2 > chi2_mult_factor * chi2_check && do_chi2)
+        {
+            std::cout << "[StateManager]: Cannot add variable due to chi2 test failure!" << std::endl;
+            return;
+        }
+        
+        StateManager::addVariableDelayedInvertible(state, var_new, var_old_order, Hxinit, Hfinit, resinit, noise_iso_meas);
+        
+        if (Hup.rows() > 0)
+            StateManager::ekfUpdate(state, var_old_order, Hup, resup, std::pow(noise_iso_meas, 2.0)*Eigen::MatrixXd::Identity(resup.rows(), resup.rows()));
     }
 }

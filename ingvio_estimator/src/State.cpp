@@ -9,6 +9,7 @@ namespace ingvio
         _max_landmarks = filter_params._max_lm_feats;
         
         _T_cl2cr = filter_params._T_cl2i*filter_params._T_cr2i.inverse();
+        _T_cl2i = filter_params._T_cl2i;
         
         _enable_gnss = static_cast<bool>(filter_params._enable_gnss);
         
@@ -17,10 +18,22 @@ namespace ingvio
         _noise_ba = filter_params._noise_ba;
         _noise_bg = filter_params._noise_bg;
         
+        _init_cov_rot = filter_params._init_cov_rot;
+        _init_cov_pos = filter_params._init_cov_pos;
+        _init_cov_vel = filter_params._init_cov_vel;
+        _init_cov_bg = filter_params._init_cov_bg;
+        _init_cov_ba = filter_params._init_cov_ba;
+        _init_cov_ext_rot = filter_params._init_cov_ext_rot;
+        _init_cov_ext_pos = filter_params._init_cov_ext_pos;
+        
         if (_enable_gnss)
         {
             _noise_clockbias = filter_params._noise_clockbias;
             _noise_clockbias = filter_params._noise_cb_rw;
+            
+            _init_cov_rcv_clockbias = filter_params._init_cov_rcv_clockbias;
+            _init_cov_rcv_clockbias_randomwalk = filter_params._init_cov_rcv_clockbias_randomwalk;
+            _init_cov_yof = filter_params._init_cov_yof;
         }
     }
     
@@ -90,4 +103,44 @@ namespace ingvio
         _camleft_imu_extrinsics->setValueByIso(Eigen::Isometry3d::Identity());
     }
     
+    void State::initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba)
+    {
+        for (int i = _extended_pose->idx(); i < _extended_pose->idx()+3; ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_rot, 2.0);
+        
+        for (int i = _extended_pose->idx()+3; i < _extended_pose->idx()+6; ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_pos, 2.0);
+        
+        for (int i = _extended_pose->idx()+6; i < _extended_pose->idx()+9; ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_vel, 2.0);
+        
+        for (int i = _bg->idx(); i < _bg->idx()+_bg->size(); ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_bg, 2.0);
+        
+        for (int i = _ba->idx(); i < _ba->idx()+_ba->size(); ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_ba, 2.0);
+        
+        for (int i = _camleft_imu_extrinsics->idx(); i < _camleft_imu_extrinsics->idx()+3; ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_ext_rot, 2.0);
+        
+        for (int i = _camleft_imu_extrinsics->idx()+3; i < _camleft_imu_extrinsics->idx()+6; ++i)
+            _cov(i, i) = std::pow(_state_params._init_cov_ext_pos, 2.0);
+        
+        this->_extended_pose->setValueLinearByQuat(init_quat_i2w);
+        
+        this->_extended_pose->setValueTrans1(init_pos);
+        
+        this->_extended_pose->setValueTrans2(init_vel);
+        
+        this->_bg->setValue(init_bg);
+        
+        this->_ba->setValue(init_ba);
+        
+        this->_camleft_imu_extrinsics->setValueByIso(_state_params._T_cl2i);
+    }
+    
+    void State::initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos)
+    {
+        this->initStateAndCov(init_quat_i2w, init_pos, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+    }
 }
