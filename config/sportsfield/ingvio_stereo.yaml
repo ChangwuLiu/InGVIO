@@ -30,3 +30,7 @@ init_cov_ext_pos: 5e-04
 init_cov_rcv_clockbias: 3.0
 init_cov_rcv_clockbias_randomwalk: 1.0
 init_cov_yof: 0.03
+
+gravity_norm: 9.8
+max_imu_buffer_size: 1000
+init_imu_buffer_sp: 100

@@ -53,6 +53,10 @@ namespace ingvio
         double _init_cov_rcv_clockbias_randomwalk;
         double _init_cov_yof;
         
+        double _init_gravity;
+        int _max_imu_buffer_size;
+        int _init_imu_buffer_sp;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         

@@ -56,3 +56,14 @@ add_executable(test_state_manager
 )
 target_link_libraries(test_state_manager ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
 gtest_discover_tests(test_state_manager)
+
+add_executable(test_propagator
+    ${PROJECT_SOURCE_DIR}/test/TestPropagator.cpp
+    ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+    ${PROJECT_SOURCE_DIR}/src/State.cpp
+    ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
+    ${PROJECT_SOURCE_DIR}/src/ImuPropagator.cpp
+)
+target_link_libraries(test_propagator ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
+gtest_discover_tests(test_propagator)

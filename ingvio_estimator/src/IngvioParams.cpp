@@ -51,6 +51,10 @@ namespace ingvio
         _init_cov_ext_rot = fs["init_cov_ext_rot"];
         _init_cov_ext_pos = fs["init_cov_ext_pos"];
     
+        _init_gravity = fs["gravity_norm"];
+        _max_imu_buffer_size = fs["max_imu_buffer_size"];
+        _init_imu_buffer_sp = fs["init_imu_buffer_sp"];
+        
         
         if (_enable_gnss)
         {
@@ -157,7 +161,14 @@ namespace ingvio
         std::cout << "init_cov_ext_rot: " << _init_cov_ext_rot << std::endl;
         
         std::cout << "init_cov_ext_pos: " << _init_cov_ext_pos << std::endl;
-  
+        
+        std::cout << "gravity_norm: " << _init_gravity << std::endl;
+
+        std::cout << "max_imu_buffer_size" << _max_imu_buffer_size << std::endl;
+        
+        std::cout << "_init_imu_buffer_sp" << _init_imu_buffer_sp << std::endl;
+
+        
         if (_enable_gnss)
         {
             std::cout << "init_cov_rcv_clockbias: " << _init_cov_rcv_clockbias << std::endl;
