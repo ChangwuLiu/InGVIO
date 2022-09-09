@@ -558,6 +558,7 @@ namespace ingvio
         
         StateManager::addVariableDelayedInvertible(state, var_new, var_old_order, Hxinit, Hfinit, resinit, noise_iso_meas);
         
+        
         if (Hup.rows() > 0)
             StateManager::ekfUpdate(state, var_old_order, Hup, resup, std::pow(noise_iso_meas, 2.0)*Eigen::MatrixXd::Identity(resup.rows(), resup.rows()));
     }

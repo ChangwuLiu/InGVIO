@@ -532,9 +532,176 @@ namespace ingvio_test
         Eigen::MatrixXd cov_ref = (Eigen::MatrixXd::Identity(cov_orig.rows(), cov_orig.cols())-K*H_large)*cov_orig;
         
         ASSERT_TRUE(isMatNear(cov_ref, StateManager::getFullCov(state)));
-        
     }
+    
+    class AddDelayedTest : public virtual ::testing::Test
+    {
+    protected:
+        AddDelayedTest()
+        {
+            filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
+            
+            state = std::make_shared<State>(filter_params);
+            
+            state->_extended_pose->setRandom();
+            state->_bg->setRandom();
+            state->_ba->setRandom();
+            
+            state->_camleft_imu_extrinsics->setRandom();
+            
+            Phi_imu.setRandom();
+            G_imu.setRandom();
+            
+            state->initStateAndCov(Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::Random().normalized(), Eigen::Vector3d::Random().normalized()));
+            
+            this->state->_timestamp = 1.0;
+            StateManager::propagateStateCov(this->state, this->Phi_imu, this->G_imu, 1.5);
+            state->_timestamp = 2.5;
+        }
+        
+        virtual ~AddDelayedTest() {}
+        
+        IngvioParams filter_params;
+        std::shared_ptr<State> state;
+        
+        Eigen::Matrix<double, 15, 15> Phi_imu;
+        Eigen::Matrix<double, 15, 12> G_imu;
+    
+    };
 
+    TEST_F(AddDelayedTest, addVarInv)
+    {
+        Eigen::VectorXd res(1);
+        res = Eigen::Vector2d::Random().head<1>();
+        
+        std::vector<std::shared_ptr<Type>> sub_var_old;
+        sub_var_old.push_back(state->_extended_pose);
+        
+        Eigen::MatrixXd H_old(1, state->_extended_pose->size());
+        H_old.setRandom();
+        
+        Eigen::MatrixXd H_new(1, 1);
+        H_new(0, 0) = 1.0;
+        
+        std::shared_ptr<Scalar> tgps = std::make_shared<Scalar>();
+        tgps->setRandom();
+        state->_gnss[State::GNSSType::GPS] = tgps;
+        
+        Eigen::MatrixXd cov_orig = StateManager::getFullCov(state);
+        
+        double noise_meas_iso = 2.0;
+        
+        StateManager::addVariableDelayedInvertible(state, tgps, sub_var_old, H_old, H_new, res, noise_meas_iso);
+        
+        ASSERT_TRUE(StateManager::checkStateContinuity(state));
+        
+        ASSERT_EQ(state->curr_cov_size(), cov_orig.cols()+1);
+        
+        ASSERT_EQ(state->_gnss[State::GNSSType::GPS]->idx(), cov_orig.rows());
+        
+        Eigen::MatrixXd cov_new = StateManager::getFullCov(state);
+        
+        Eigen::MatrixXd x1 = H_old*cov_orig.block<9, 9>(0, 0)*H_old.transpose();
+        
+        ASSERT_NEAR(cov_new(cov_new.rows()-1, cov_new.cols()-1), (x1(0, 0)+std::pow(noise_meas_iso, 2.0))/std::pow(H_new(0, 0), 2.0), 1e-8);
+        
+        auto isMatNear = [](const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2)
+        {
+            if ((mat1-mat2).norm() < 1e-08)
+                return true;
+            else
+                return false;
+        };
+        
+        Eigen::Matrix<double, 1, 21> H_old_large = Eigen::Matrix<double, 1, 21>::Zero();
+        H_old_large.block<1, 9>(0, 0) = H_old.block<1, 9>(0, 0);
+        
+        ASSERT_TRUE(isMatNear(cov_new.block<21, 1>(0, 21), -cov_orig*H_old_large.transpose()/H_new(0, 0)));
+    }
+    
+    TEST_F(AddDelayedTest, addVar)
+    {
+        Eigen::VectorXd res(2);
+        res.setRandom();
+        
+        std::vector<std::shared_ptr<Type>> sub_var_old;
+        sub_var_old.push_back(state->_extended_pose);
+        
+        Eigen::MatrixXd H_old(2, state->_extended_pose->size());
+        H_old.setRandom();
+        
+        Eigen::MatrixXd H_new(2, 1);
+        H_new(0, 0) = 1.0;
+        H_new(1, 0) = 1.0;
+        
+        Eigen::MatrixXd H_old_copy = H_old;
+        Eigen::MatrixXd H_new_copy = H_new;
+        Eigen::VectorXd res_copy = res;
+        
+        std::shared_ptr<Scalar> tgps = std::make_shared<Scalar>();
+        tgps->setRandom();
+        state->_gnss[State::GNSSType::GPS] = tgps;
+        
+        Eigen::MatrixXd cov_orig = StateManager::getFullCov(state);
+        
+        double noise_meas_iso = 2.0;
+        
+        StateManager::addVariableDelayed(state, tgps, sub_var_old, H_old, H_new, res, noise_meas_iso, 1.0, false);
+        
+        ASSERT_TRUE(StateManager::checkStateContinuity(state));
+        
+        ASSERT_EQ(state->curr_cov_size(), cov_orig.cols()+1);
+        
+        ASSERT_EQ(state->_gnss[State::GNSSType::GPS]->idx(), cov_orig.rows());
+        
+        Eigen::MatrixXd cov_new = StateManager::getFullCov(state);
+        
+        Eigen::Matrix<double, 2, 2> Q_T;
+        Q_T(0, 0) = std::sqrt(2.0)/2.0;
+        Q_T(0, 1) = std::sqrt(2.0)/2.0;
+        Q_T(1, 0) = -std::sqrt(2.0)/2.0;
+        Q_T(1, 1) = std::sqrt(2.0)/2.0;
+        
+        res_copy = Q_T*res_copy;
+        H_old_copy = Q_T*H_old_copy;
+        H_new_copy = Q_T*H_new_copy;
+        
+        Eigen::MatrixXd x1 = H_old_copy.block<1, 9>(0, 0)*cov_orig.block<9, 9>(0, 0)*H_old_copy.block<1, 9>(0, 0).transpose();
+    
+        
+        auto isMatNear = [](const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2)
+        {
+            if ((mat1-mat2).norm() < 1e-08)
+                return true;
+            else
+                return false;
+        };
+        
+        Eigen::MatrixXd cov_before_update(22, 22);
+        cov_before_update.block<21, 21>(0, 0) = cov_orig;
+        
+        cov_before_update(21, 21) = (x1(0, 0)+std::pow(noise_meas_iso, 2.0))/std::pow(H_new_copy(0, 0), 2.0);
+        
+        Eigen::Matrix<double, 1, 21> H_old_copy_large = Eigen::Matrix<double, 1, 21>::Zero();
+        H_old_copy_large.block<1, 9>(0, 0) = H_old_copy.block<1, 9>(0, 0);
+        
+        cov_before_update.block<21, 1>(0, 21) = -cov_orig*H_old_copy_large.transpose()/H_new_copy(0, 0);
+        
+        cov_before_update.block<1, 21>(21, 0) = cov_before_update.block<21, 1>(0, 21).transpose();
+        
+        Eigen::MatrixXd H_update = Eigen::MatrixXd::Zero(1, 22);
+        H_update.block<1, 9>(0, 0) = H_old_copy.block<1, 9>(1, 0);
+        
+        Eigen::MatrixXd S = H_update*cov_before_update*H_update.transpose() + std::pow(noise_meas_iso, 2.0)*Eigen::MatrixXd::Identity(1, 1);
+        
+        Eigen::MatrixXd Kalman_gain = cov_before_update*H_update.transpose()*S.inverse();
+        
+        Eigen::MatrixXd cov_after_update = cov_before_update;
+        cov_after_update -= Kalman_gain*H_update*cov_before_update;
+        
+        ASSERT_TRUE(isMatNear(cov_after_update, cov_new));
+    }
+    
 }
 
 int main(int argc, char** argv)
