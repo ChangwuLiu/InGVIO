@@ -46,13 +46,34 @@ namespace ingvio
             
             return result;
         }
+        
+        ImuCtrl& operator=(const ImuCtrl& other_imu_ctrl)
+        {
+            this->_timestamp = other_imu_ctrl._timestamp;
+            this->_accel_raw = other_imu_ctrl._accel_raw;
+            this->_gyro_raw = other_imu_ctrl._gyro_raw;
+            
+            return *this;
+        }
+        
+        void setRandom()
+        {
+            _accel_raw.setRandom();
+            _gyro_raw.setRandom();
+        }
     };
     
     class ImuPropagator
     {
     public:
-        ImuPropagator() : _has_gravity_set(false) 
-        {}
+        ImuPropagator() : _has_gravity_set(true) 
+        {
+            _init_imu_buffer_sp = -1;
+            _init_gravity = 9.8;
+            
+            _gravity = Eigen::Vector3d(0.0, 0.0, -9.8);
+            _quat_init.setIdentity();
+        }
         
         ImuPropagator(const IngvioParams& filter_params) : _has_gravity_set(false), _init_gravity(filter_params._init_gravity), _max_imu_buffer_size(filter_params._max_imu_buffer_size), _init_imu_buffer_sp(filter_params._init_imu_buffer_sp)
         {
@@ -110,13 +131,22 @@ namespace ingvio
             return _gravity;
         }
         
+        const bool& isInit() const
+        { return _has_gravity_set; }
+        
+        void stateAndCovTransition(std::shared_ptr<State> state, const ImuCtrl& imu_ctrl, double dt, Eigen::Matrix<double, 15, 15>& Phi, Eigen::Matrix<double, 15, 12>& G, bool isAnalytic = true);
+        
+        void propagateUntil(std::shared_ptr<State> state, double t_end, bool isAnalytic = true);
+        
+        void propagateAugmentAtEnd(std::shared_ptr<State> state, double t_end, bool isAnalytic = true);
+        
     protected:
         
-        bool _has_gravity_set = false; 
+        bool _has_gravity_set; 
         
-        double _init_gravity = 9.8;
-        int _max_imu_buffer_size = 1000;
-        int _init_imu_buffer_sp = 100;
+        double _init_gravity;
+        int _max_imu_buffer_size;
+        int _init_imu_buffer_sp;
         
         Eigen::Vector3d _gravity;
         

@@ -103,8 +103,10 @@ namespace ingvio
         _camleft_imu_extrinsics->setValueByIso(Eigen::Isometry3d::Identity());
     }
     
-    void State::initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba)
+    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba)
     {
+        _timestamp = init_timestamp;
+        
         for (int i = _extended_pose->idx(); i < _extended_pose->idx()+3; ++i)
             _cov(i, i) = std::pow(_state_params._init_cov_rot, 2.0);
         
@@ -139,8 +141,61 @@ namespace ingvio
         this->_camleft_imu_extrinsics->setValueByIso(_state_params._T_cl2i);
     }
     
-    void State::initStateAndCov(const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos)
+    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos)
     {
-        this->initStateAndCov(init_quat_i2w, init_pos, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+        this->initStateAndCov(init_timestamp, init_quat_i2w, init_pos, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
     }
+    
+    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w)
+    {
+        this->initStateAndCov(init_timestamp, init_quat_i2w, Eigen::Vector3d::Zero());
+    }
+    
+    double distance(std::shared_ptr<State> state1, std::shared_ptr<State> state2)
+    {
+        if (state1->_timestamp != state2->_timestamp)
+            std::cout << "[State]: Timestamp not the same when calc distance!" << std::endl; 
+        
+        double dist = 0.0;
+        
+        dist += (state1->_extended_pose->valueLinearAsMat()-state2->_extended_pose->valueLinearAsMat()).norm();
+        
+        dist += (state1->_extended_pose->valueTrans1()-state2->_extended_pose->valueTrans1()).norm();
+        
+        dist += (state1->_extended_pose->valueTrans2()-state2->_extended_pose->valueTrans2()).norm();
+        
+        dist += (state1->_bg->value()-state2->_bg->value()).norm();
+        
+        dist += (state1->_ba->value()-state2->_ba->value()).norm();
+        
+        dist += (state1->_camleft_imu_extrinsics->valueLinearAsMat()-state2->_camleft_imu_extrinsics->valueLinearAsMat()).norm();
+        
+        dist += (state1->_camleft_imu_extrinsics->valueTrans()-state2->_camleft_imu_extrinsics->valueTrans()).norm();
+        
+        for (const auto& item : state1->_gnss)
+        {
+            assert(state2->_gnss.find(item.first) != state2->_gnss.end());
+            
+            dist += std::fabs(item.second->value() - state2->_gnss.at(item.first)->value());
+        }
+        
+        for (const auto& item : state1->_anchored_landmarks)
+        {
+            assert(state2->_anchored_landmarks.find(item.first) != state2->_anchored_landmarks.end());
+            
+            dist += (item.second->valuePosXyz()-state2->_anchored_landmarks.at(item.first)->valuePosXyz()).norm();
+        }
+        
+        for (const auto& item : state2->_sw_camleft_poses)
+        {
+            assert(state2->_sw_camleft_poses.find(item.first) != state2->_sw_camleft_poses.end());
+            
+            dist += (item.second->valueLinearAsMat()-state2->_sw_camleft_poses.at(item.first)->valueLinearAsMat()).norm();
+            
+            dist += (item.second->valueTrans()-state2->_sw_camleft_poses.at(item.first)->valueTrans()).norm();
+        }
+        
+        return  dist;
+    }
+
 }

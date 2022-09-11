@@ -3,6 +3,11 @@
 #include "IngvioParams.h"
 #include "ImuPropagator.h"
 
+#include "State.h"
+#include "StateManager.h"
+
+#include "TicToc.h"
+
 using namespace ingvio;
 
 namespace ingvio_test
@@ -23,6 +28,7 @@ namespace ingvio_test
         IngvioParams filter_params;
         
         Eigen::Vector3d sf;
+
     };
     
     TEST_F(TestPropagator, initGravity)
@@ -30,10 +36,9 @@ namespace ingvio_test
         filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
         filter_params.printParams();
         
-        ImuPropagator ip1;
+        ImuPropagator ip2;
         
-        filter_params._init_imu_buffer_sp = -1;
-        ImuPropagator ip2(filter_params);
+        ImuPropagator ip1(filter_params);
         
         for (int i = 0; i < _N; ++i)
         {
@@ -84,6 +89,153 @@ namespace ingvio_test
             ASSERT_TRUE(isQuatNear(quat_ref, tmp_quat1));
             ASSERT_TRUE(isQuatNear(quat_ref, tmp_quat2));
         }
+    }
+    
+    TEST_F(TestPropagator, oneStepProp)
+    {
+        filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
+        
+        filter_params._init_imu_buffer_sp = -1;
+        
+        ImuPropagator ip(filter_params);
+        
+        ImuCtrl imu_ctrl;
+        imu_ctrl.setRandom();
+        
+        std::shared_ptr<State> state1, state2;
+        
+        auto reset = [](std::shared_ptr<State>& state1, std::shared_ptr<State>& state2, const IngvioParams& filter_params)
+        {
+            state1.reset(new State(filter_params));
+            state2.reset(new State(filter_params));
+            
+            state1->_timestamp = 1.0;
+            state2->_timestamp = 1.0;
+            
+            state1->_extended_pose->setRandom();
+            state2->_extended_pose = state1->_extended_pose->clone();
+            
+            state1->_bg->setRandom();
+            state2->_bg = state1->_bg->clone();
+            
+            state1->_ba->setRandom();
+            state2->_ba = state1->_ba->clone();
+            
+            StateManager::addGNSSVariable(state1, State::GNSSType::GPS, 5000, 9.0);
+            StateManager::addGNSSVariable(state1, State::GNSSType::FS, 20, 2.0);
+            
+            StateManager::addGNSSVariable(state2, State::GNSSType::GPS, 5000, 9.0);
+            StateManager::addGNSSVariable(state2, State::GNSSType::FS, 20, 2.0);
+        };
+        
+        reset(state1, state2, filter_params);
+        ASSERT_NEAR(distance(state1, state2), 0.0, 1e-12);
+        
+        double err1 = INFINITY;
+        double err2 = INFINITY;
+        
+        Eigen::Matrix<double, 15, 15> Phi1, Phi2;
+        Eigen::Matrix<double, 15, 12> G1, G2;
+        
+        double t_analytic = 0.0;
+        double t_numerical = 0.0;
+        
+        for (int i = 0; i < 5; ++i)
+        {
+            reset(state1, state2, filter_params);
+            
+            double dt = std::pow(10.0, -i);
+            
+            TicToc analytic;
+            ip.stateAndCovTransition(state1, imu_ctrl, dt, Phi1, G1, true);
+            t_analytic += analytic.toc();
+            
+            TicToc numerical;
+            ip.stateAndCovTransition(state2, imu_ctrl, dt, Phi2, G2, false);
+            t_numerical += numerical.toc();
+            
+            double err_state = distance(state1, state2);
+            double err_Phi = (Phi1-Phi2).norm();
+            
+            ASSERT_TRUE(err_state < err1);
+            ASSERT_TRUE(err_Phi < err2);
+            
+            err1 = err_state;
+            err2 = err_Phi;
+        }
+        
+        std::cout << "Analytic one step prop: " << t_analytic << " (ms)" << std::endl;
+        std::cout << "Numerical one step prop: " << t_numerical << " (ms)" << std::endl;
+    }
+    
+    TEST_F(TestPropagator, propaUntil)
+    {
+        filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
+        filter_params._init_imu_buffer_sp = -1;
+        
+        std::shared_ptr<State> state = std::make_shared<State>(filter_params);
+        
+        ImuPropagator ip(filter_params);
+        
+        ASSERT_TRUE(ip.isInit());
+        
+        state->initStateAndCov(0.0, Eigen::Quaterniond::Identity());
+        
+        for (int i = -20; i <= 100; ++i)
+        {
+            ImuCtrl imu_ctrl;
+            imu_ctrl.setRandom();
+            imu_ctrl._timestamp = 0.1*i;
+            
+            ip.storeImu(imu_ctrl);
+        }
+        
+        ip.propagateUntil(state, 1.0);
+        ASSERT_EQ(state->_timestamp, 1.0);
+        
+        ip.propagateUntil(state, 8.35);
+        ASSERT_EQ(state->_timestamp, 8.35);
+        
+        ip.propagateUntil(state, 7.1);
+        ASSERT_EQ(state->_timestamp, 8.35);
+        
+        ip.propagateUntil(state, 9.5);
+        ASSERT_EQ(state->_timestamp, 9.5);
+        
+        ip.propagateUntil(state, 10.5);
+        ASSERT_EQ(state->_timestamp, 10.5);
+        
+        ip.propagateUntil(state, 11.0);
+        ASSERT_EQ(state->_timestamp, 10.5);
+    }
+    
+    TEST_F(TestPropagator, propagateAugment)
+    {
+        filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
+        filter_params._init_imu_buffer_sp = -1;
+        
+        std::shared_ptr<State> state = std::make_shared<State>(filter_params);
+        
+        ImuPropagator ip(filter_params);
+        
+        ASSERT_TRUE(ip.isInit());
+        
+        state->initStateAndCov(0.0, Eigen::Quaterniond::Identity());
+        
+        for (int i = -20; i <= 100; ++i)
+        {
+            ImuCtrl imu_ctrl;
+            imu_ctrl.setRandom();
+            imu_ctrl._timestamp = 0.1*i;
+            
+            ip.storeImu(imu_ctrl);
+        }
+        
+        for (int i = 0; i < 15; ++i)
+            ip.propagateAugmentAtEnd(state, (i+1)*0.5);
+        
+        ASSERT_EQ(state->_timestamp, 7.5);
+        ASSERT_EQ(state->curr_cov_size(), 21 + 6*15);
     }
 }
 

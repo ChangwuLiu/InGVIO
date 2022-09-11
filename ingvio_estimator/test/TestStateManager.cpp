@@ -552,7 +552,7 @@ namespace ingvio_test
             Phi_imu.setRandom();
             G_imu.setRandom();
             
-            state->initStateAndCov(Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::Random().normalized(), Eigen::Vector3d::Random().normalized()));
+            state->initStateAndCov(1.0, Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::Random().normalized(), Eigen::Vector3d::Random().normalized()));
             
             this->state->_timestamp = 1.0;
             StateManager::propagateStateCov(this->state, this->Phi_imu, this->G_imu, 1.5);

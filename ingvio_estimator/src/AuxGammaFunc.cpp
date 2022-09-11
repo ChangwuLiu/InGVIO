@@ -91,4 +91,112 @@ namespace ingvio
         result = factor0*Eigen::Matrix3d::Identity() + factor1*n_cross + factor2*n_cross2;
         return result;
     }
+    
+    Eigen::Matrix3d Psi1Func(const Eigen::Vector3d& tilde_omega, const Eigen::Vector3d& tilde_acc, double dt)
+    {
+        if ((tilde_omega*dt).norm() < 1e-08) return Eigen::Matrix3d::Zero();
+        
+        Eigen::Matrix3d M1 = skew(tilde_acc)*GammaFunc(-tilde_omega*dt, 2)*std::pow(dt, 2.0);
+        
+        Eigen::Matrix3d WA = skew(tilde_omega)*skew(tilde_acc);
+        
+        Eigen::Matrix3d WAW = WA*skew(tilde_omega);
+        
+        Eigen::Matrix3d WAW2 = WAW*skew(tilde_omega);
+        
+        Eigen::Matrix3d W2A = skew(tilde_omega)*WA;
+        
+        Eigen::Matrix3d W2AW = W2A*skew(tilde_omega);
+        
+        Eigen::Matrix3d W2AW2 = W2AW*skew(tilde_omega);
+        
+        double eta = tilde_omega.norm();
+        
+        double xi = eta*dt;
+        double xi2 = std::pow(xi, 2.0);
+        
+        double sin_xi = std::sin(xi);
+        double cos_xi = std::cos(xi);
+        
+        double sin_2xi = std::sin(2*xi);
+        double cos_2xi = std::cos(2*xi);
+        
+        double eta3 = std::pow(eta, 3);
+        double eta4 = eta*eta3;
+        double eta5 = eta*eta4;
+        double eta6 = eta*eta5;
+        
+        double c1 = (sin_xi-xi*cos_xi)/eta3;
+        
+        double c2 = (cos_2xi-4*cos_xi+3)/(4*eta4);
+        
+        double c3 = (4*sin_xi+sin_2xi-4*xi*cos_xi-2*xi)/(4*eta5);
+        
+        double c4 = (xi2-2*xi*sin_xi-2*cos_xi+2)/(2*eta4);
+        
+        double c5 = (6*xi-8*sin_xi+sin_2xi)/(4*eta5);
+        
+        double c6 = (2*xi2-4*xi*sin_xi-cos_2xi+1)/(4*eta6);
+        
+        Eigen::Matrix3d result = M1*(c1*WA + c2*WAW + c3*WAW2 + c4*W2A + c5*W2AW + c6*W2AW2);
+        
+        return result;
+    }
+    
+    Eigen::Matrix3d Psi2Func(const Eigen::Vector3d& tilde_omega, const Eigen::Vector3d& tilde_acc, double dt)
+    {
+        if ((tilde_omega*dt).norm() < 1e-07)
+            return Eigen::Matrix3d::Zero();
+        
+        Eigen::Matrix3d M1 = skew(tilde_acc)*GammaFunc(-tilde_omega*dt, 3)*std::pow(dt, 3);
+        
+        Eigen::Matrix3d WA = skew(tilde_omega)*skew(tilde_acc);
+        
+        Eigen::Matrix3d WAW = WA*skew(tilde_omega);
+        
+        Eigen::Matrix3d WAW2 = WAW*skew(tilde_omega);
+        
+        Eigen::Matrix3d W2A = skew(tilde_omega)*WA;
+        
+        Eigen::Matrix3d W2AW = W2A*skew(tilde_omega);
+        
+        Eigen::Matrix3d W2AW2 = W2AW*skew(tilde_omega);
+        
+        double eta = tilde_omega.norm();
+        
+        double xi = eta*dt;
+        
+        double xi2 = std::pow(xi, 2.0);
+        double xi3 = xi*xi2;
+        
+        double sin_xi = std::sin(xi);
+        double cos_xi = std::cos(xi);
+        
+        double sin_2xi = std::sin(2*xi);
+        double cos_2xi = std::cos(2*xi);
+        
+        double eta3 = std::pow(eta, 3);
+        double eta4 = eta*eta3;
+        double eta5 = eta*eta4;
+        double eta6 = eta*eta5;
+        double eta7 = eta*eta6;
+        
+        double c1 = (xi*sin_xi+2*cos_xi-2)/eta4;
+        
+        double c2 = (6*xi-8*sin_xi+sin_2xi)/(8*eta5);
+        
+        double c3 = (2*xi2+8*xi*sin_xi+16*cos_xi+cos_2xi-17)/(8*eta6);
+        
+        double c4 = (xi3+6*xi-12*sin_xi+6*xi*cos_xi)/(6*eta5);
+        
+        double c5 = (6*xi2+16*cos_xi-cos_2xi-15)/(8*eta6);
+        
+        double c6 = (4*xi3+6*xi-24*sin_xi-3*sin_2xi+24*xi*cos_xi)/(24*eta7);
+        
+        Eigen::Matrix3d result;
+        
+        result = M1*(c1*WA + c2*WAW + c3*WAW2 + c4*W2A + c5*W2AW + c6*W2AW2);
+        
+        return result;
+    }
 }
