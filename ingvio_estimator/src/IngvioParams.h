@@ -57,6 +57,13 @@ namespace ingvio
         int _max_imu_buffer_size;
         int _init_imu_buffer_sp;
         
+        double _trans_thres;
+        double _huber_epsilon;
+        double _conv_precision;
+        double _init_damping;
+        int _outer_loop_max_iter;
+        int _inner_loop_max_iter;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         

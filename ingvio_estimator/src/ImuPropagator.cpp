@@ -283,4 +283,22 @@ namespace ingvio
         
         StateManager::augmentSlidingWindowPose(state);
     }
+    
+    void ImuPropagator::propagateToExpectedPoseAndAugment(std::shared_ptr<State> state, double t_end, const Eigen::Isometry3d& T_i2w)
+    {
+        if (!_has_gravity_set) return;
+        
+        state->_extended_pose->setValueLinearByMat(T_i2w.linear());
+        state->_extended_pose->setValueTrans1(T_i2w.translation());
+        state->_extended_pose->setValueTrans2(Eigen::Vector3d::Zero());
+        
+        state->_bg->setIdentity();
+        state->_ba->setIdentity();
+        
+        state->_camleft_imu_extrinsics->setIdentity();
+        
+        state->_timestamp = t_end;
+        
+        StateManager::augmentSlidingWindowPose(state);
+    }
 }

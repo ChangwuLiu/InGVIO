@@ -67,3 +67,24 @@ add_executable(test_propagator
 )
 target_link_libraries(test_propagator ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
 gtest_discover_tests(test_propagator)
+
+add_executable(test_map_server
+    ${PROJECT_SOURCE_DIR}/test/TestMapServer.cpp
+    ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+    ${PROJECT_SOURCE_DIR}/src/State.cpp
+    ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
+    ${PROJECT_SOURCE_DIR}/src/ImuPropagator.cpp
+    ${PROJECT_SOURCE_DIR}/src/MapServerManager.cpp
+)
+target_link_libraries(test_map_server ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
+gtest_discover_tests(test_map_server)
+
+add_executable(test_triangulator
+    ${PROJECT_SOURCE_DIR}/test/TestTriangulator.cpp
+    ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
+    ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
+    ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+)
+target_link_libraries(test_triangulator ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
+gtest_discover_tests(test_triangulator)

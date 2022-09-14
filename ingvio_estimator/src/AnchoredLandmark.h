@@ -122,7 +122,7 @@ namespace ingvio
                 _anchored_pose.reset();
         }
         
-        std::shared_ptr<SE3> getAnchoredPose() const
+        const std::shared_ptr<SE3> getAnchoredPose() const
         { return _anchored_pose; }
         
         const Eigen::Vector3d& valuePosRep() const

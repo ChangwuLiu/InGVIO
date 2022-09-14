@@ -55,6 +55,14 @@ namespace ingvio
         _max_imu_buffer_size = fs["max_imu_buffer_size"];
         _init_imu_buffer_sp = fs["init_imu_buffer_sp"];
         
+        _trans_thres = fs["trans_thres"];
+        _huber_epsilon = fs["huber_epsilon"];
+        _conv_precision = fs["conv_precision"];
+        _init_damping = fs["init_damping"];
+        _outer_loop_max_iter = fs["outer_loop_max_iter"];
+        _inner_loop_max_iter = fs["inner_loop_max_iter"];
+        
+        
         
         if (_enable_gnss)
         {
@@ -164,9 +172,21 @@ namespace ingvio
         
         std::cout << "gravity_norm: " << _init_gravity << std::endl;
 
-        std::cout << "max_imu_buffer_size" << _max_imu_buffer_size << std::endl;
+        std::cout << "max_imu_buffer_size: " << _max_imu_buffer_size << std::endl;
         
-        std::cout << "_init_imu_buffer_sp" << _init_imu_buffer_sp << std::endl;
+        std::cout << "init_imu_buffer_sp: " << _init_imu_buffer_sp << std::endl;
+
+        std::cout << "trans_thres: " << _trans_thres << std::endl;
+        
+        std::cout << "huber_epsilon: " << _huber_epsilon << std::endl;
+        
+        std::cout << "conv_precision: " << _conv_precision << std::endl;
+        
+        std::cout << "init_damping: " << _init_damping << std::endl;
+        
+        std::cout << "outer_loop_max_iter: " << _outer_loop_max_iter << std::endl;
+        
+        std::cout << "inner_loop_max_iter: " << _inner_loop_max_iter << std::endl;
 
         
         if (_enable_gnss)

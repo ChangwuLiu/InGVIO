@@ -140,6 +140,8 @@ namespace ingvio
         
         void propagateAugmentAtEnd(std::shared_ptr<State> state, double t_end, bool isAnalytic = true);
         
+        void propagateToExpectedPoseAndAugment(std::shared_ptr<State> state, double t_end, const Eigen::Isometry3d& T_i2w);
+        
     protected:
         
         bool _has_gravity_set; 

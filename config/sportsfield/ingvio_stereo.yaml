@@ -34,3 +34,10 @@ init_cov_yof: 0.03
 gravity_norm: 9.8
 max_imu_buffer_size: 1000
 init_imu_buffer_sp: 100
+
+trans_thres: 0.1
+huber_epsilon: 0.01
+conv_precision: 5e-07
+init_damping: 1e-03
+outer_loop_max_iter: 10
+inner_loop_max_iter: 10
