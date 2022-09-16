@@ -76,8 +76,8 @@ namespace ingvio
     }
     
     void ImuPropagator::stateAndCovTransition(std::shared_ptr<State> state, const ImuCtrl& imu_ctrl, double dt, Eigen::Matrix<double, 15, 15>& Phi, Eigen::Matrix<double, 15, 12>& G, bool isAnalytic)
-    {
-        Phi.setZero();
+    {        
+        Phi.setIdentity();
         G.setZero();
         
         Eigen::Matrix3d R_hat = state->_extended_pose->valueLinearAsMat();

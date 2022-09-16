@@ -15,6 +15,7 @@ namespace ingvio
     class FeatureInfo;
     
     class State;
+    class Triangulator;
     
     class MonoMeasManager
     {
@@ -58,9 +59,13 @@ namespace ingvio
         
         static void collectStereoMeas(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, std::shared_ptr<StereoMeas> stereo_meas);
         
-        static bool triangulateMono(std::shared_ptr<FeatureInfo> feature_info);
+        static bool triangulateFeatureInfoMono(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state);
         
-        static bool triangulateStereo(std::shared_ptr<FeatureInfo> feature_info);
+        static bool triangulateFeatureInfoStereo(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state);
+        
+        static void changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, double target_sw_timestamp);
+        
+        static void changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state);
     };
     
     class MapServerManager
@@ -70,11 +75,15 @@ namespace ingvio
         MapServerManager(const MapServerManager&) {}
         MapServerManager operator=(const MapServerManager&) = delete;
         
-    public:
+    public:     
+        
         static void collectMonoMeas(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, const feature_tracker::MonoFrame::ConstPtr& mono_frame_msg);
         
         static void collectStereoMeas(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, const feature_tracker::StereoFrame::ConstPtr& stereo_frame_msg);
         
-        static void markMargFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, bool isStereo = true);
+        static void markMargMonoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state);
+        
+        static void markMargStereoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state);
+        
     };
 }

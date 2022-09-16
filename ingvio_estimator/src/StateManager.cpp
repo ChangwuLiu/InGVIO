@@ -562,4 +562,64 @@ namespace ingvio
         if (Hup.rows() > 0)
             StateManager::ekfUpdate(state, var_old_order, Hup, resup, std::pow(noise_iso_meas, 2.0)*Eigen::MatrixXd::Identity(resup.rows(), resup.rows()));
     }
+    
+    void StateManager::replaceVarLinear(std::shared_ptr<State> state, const std::shared_ptr<Type> target_var, const std::vector<std::shared_ptr<Type>>& dependence_order, const Eigen::MatrixXd& H)
+    {
+        bool notFound = true;
+        for (const auto& item : state->_err_variables)
+            if (target_var == item)
+            {
+                notFound = false;
+                break;
+            }
+            
+        if (notFound)
+        {
+            std::cout << "[StateManager]: Target var not in state, cannot linearly replace!" << std::endl;
+            return;
+        }
+        
+        assert(StateManager::checkSubOrder(state, dependence_order));
+        assert(target_var->size() == H.rows());
+        
+        int small_idx = 0;
+        std::vector<int> H_idx;
+        
+        for (int i = 0; i < dependence_order.size(); ++i)
+        {
+            H_idx.push_back(small_idx);
+            
+            small_idx += dependence_order[i]->size();
+        }
+        
+        assert(small_idx == H.cols());
+        
+        Eigen::MatrixXd PH_T(state->_cov.rows(), H.rows());
+        
+        PH_T.setZero();
+        
+        for (const auto& total_var : state->_err_variables)
+        {
+            Eigen::MatrixXd PH_T_i = Eigen::MatrixXd::Zero(total_var->size(), H.rows());
+            
+            for (int i = 0; i < dependence_order.size(); ++i)
+            {
+                std::shared_ptr<Type> meas_var = dependence_order[i];
+                
+                PH_T_i.noalias() += state->_cov.block(total_var->idx(), meas_var->idx(), total_var->size(), meas_var->size())*H.block(0, H_idx[i], H.rows(), meas_var->size()).transpose();
+            }
+            
+            PH_T.block(total_var->idx(), 0, total_var->size(), H.rows()) = PH_T_i;
+        }
+        
+        Eigen::MatrixXd small_cov = StateManager::getMarginalCov(state, dependence_order);
+        
+        Eigen::MatrixXd HPH_T = H*small_cov*H.transpose();
+        
+        state->_cov.block(0, target_var->idx(), state->curr_cov_size(), target_var->size()) = PH_T;
+        
+        state->_cov.block(target_var->idx(), 0, target_var->size(), state->curr_cov_size()) = PH_T.transpose();
+        
+        state->_cov.block(target_var->idx(), target_var->idx(), target_var->size(), target_var->size()) = HPH_T;
+    }
 }

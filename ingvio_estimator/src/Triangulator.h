@@ -28,9 +28,9 @@ namespace ingvio
         
         ~Triangulator() {}
         
-        bool triangulateMonoObs(const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, Eigen::Vector3d& pf) const;
+        bool triangulateMonoObs(const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, Eigen::Vector3d& pf) const;
         
-        bool triangulateStereoObs(const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, const Eigen::Isometry3d& T_cl2cr, Eigen::Vector3d& pf) const;
+        bool triangulateStereoObs(const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, const Eigen::Isometry3d& T_cl2cr, Eigen::Vector3d& pf) const;
         
     protected:
     
@@ -52,5 +52,19 @@ namespace ingvio
         double calcTotalCost(const std::map<double, std::shared_ptr<MonoMeas>>& mobs, const std::map<double, std::shared_ptr<SE3>>& rel_poses, const Eigen::Vector3d& solution) const;
         
         void calcResJacobian(const Eigen::Vector2d& meas, const std::shared_ptr<SE3> rel_pose, const Eigen::Vector3d& solution, Eigen::Vector2d& res, Eigen::Matrix<double, 2, 3>& J, double& w) const;
+        
+        template<typename T>
+        void filterCommonTimestamp(const std::map<double, std::shared_ptr<SE3>, std::less<double>>& poses, const std::map<double, std::shared_ptr<T>>& obs, std::map<double, std::shared_ptr<SE3>>& common_poses, std::map<double, std::shared_ptr<T>>& common_obs) const
+        {
+            common_obs.clear();
+            common_poses.clear();
+            
+            for (const auto& item : obs)
+            {
+                if (poses.find(item.first) == poses.end()) continue;
+                common_obs[item.first] = item.second;
+                common_poses[item.first] = poses.at(item.first);
+            }
+        }
     };
 }

@@ -75,7 +75,7 @@ namespace ingvio
     public:
         enum FeatureType {MSCKF = 0, SLAM};
         
-        FeatureInfo() : _id(-1), _ftype(MSCKF), _isToMarg(false) 
+        FeatureInfo() : _id(-1), _ftype(MSCKF), _isToMarg(false), _isTri(false) 
         {
             _mono_obs.clear();
             _stereo_obs.clear();
@@ -93,6 +93,9 @@ namespace ingvio
         
         const bool& isToMarg() const
         {  return _isToMarg;  }
+        
+        const bool& isTri() const
+        {  return _isTri;  }
         
         bool hasMonoObsAt(double timestamp) const
         {  return (_mono_obs.find(timestamp) != _mono_obs.end());  }
@@ -125,13 +128,19 @@ namespace ingvio
         const std::shared_ptr<SE3> anchor() const
         {  return _landmark->getAnchoredPose();  }
         
-    protected:
+        const std::shared_ptr<AnchoredLandmark> landmark() const
+        {  return _landmark;  }
+     
+     /*
+     protected:
         friend class FeatureInfoManager;
         friend class MapServerManager;
-        
+     */
+     
         int _id;
         FeatureType _ftype;
         bool _isToMarg;
+        bool _isTri;
         
         std::shared_ptr<AnchoredLandmark> _landmark;
         
@@ -139,17 +148,5 @@ namespace ingvio
         std::map<double, std::shared_ptr<StereoMeas>> _stereo_obs;
     };
     
-    class MapServer
-    {
-    public:
-        MapServer ()
-        {
-            _feats.clear();
-        }
-        
-        ~MapServer () = default;
-        
-        std::map<int, std::shared_ptr<FeatureInfo>> _feats;
-        
-    };
+    typedef std::map<int, std::shared_ptr<FeatureInfo>> MapServer;
 }

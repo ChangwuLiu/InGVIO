@@ -9,6 +9,8 @@
 #include "MapServer.h"
 #include "MapServerManager.h"
 
+#include "Triangulator.h"
+
 namespace ingvio
 {
     std::shared_ptr<MonoMeas> MonoMeasManager::convertFromMsg(const feature_tracker::MonoMeas::ConstPtr& mono_msg)
@@ -92,6 +94,7 @@ namespace ingvio
             
             feature_info->_ftype = FeatureInfo::FeatureType::MSCKF;
             feature_info->_isToMarg = false;
+            feature_info->_isTri = false;
             
             feature_info->_landmark->resetAnchoredPose(state->_sw_camleft_poses.at(timestamp));
         }
@@ -131,6 +134,7 @@ namespace ingvio
             
             feature_info->_ftype = FeatureInfo::FeatureType::MSCKF;
             feature_info->_isToMarg = false;
+            feature_info->_isTri = false;
             
             feature_info->_landmark->resetAnchoredPose(state->_sw_camleft_poses.at(timestamp));
         }
@@ -159,10 +163,10 @@ namespace ingvio
         
         for (const auto& item : mono_frame_msg->mono_features)
         {
-            if (map_server->_feats.find(item.id) == map_server->_feats.end())
-                map_server->_feats[item.id] = std::make_shared<FeatureInfo>();
+            if (map_server->find(item.id) == map_server->end())
+                map_server->insert(std::make_pair(item.id, std::make_shared<FeatureInfo>()));
                 
-            FeatureInfoManager::collectMonoMeas(map_server->_feats.at(item.id), state, MonoMeasManager::convertFromMsg(item));
+            FeatureInfoManager::collectMonoMeas(map_server->at(item.id), state, MonoMeasManager::convertFromMsg(item));
         }
     }
     
@@ -172,53 +176,149 @@ namespace ingvio
         
         for (const auto& item : stereo_frame_msg->stereo_features)
         {
-            if (map_server->_feats.find(item.id) == map_server->_feats.end())
-                map_server->_feats[item.id] = std::make_shared<FeatureInfo>();
+            if (map_server->find(item.id) == map_server->end())
+                map_server->insert(std::make_pair(item.id, std::make_shared<FeatureInfo>()));
             
-            FeatureInfoManager::collectStereoMeas(map_server->_feats.at(item.id), state, StereoMeasManager::convertFromMsg(item));
+            FeatureInfoManager::collectStereoMeas(map_server->at(item.id), state, StereoMeasManager::convertFromMsg(item));
         }
     }
     
-    void MapServerManager::markMargFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, bool isStereo)
+    void MapServerManager::markMargMonoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state)
     {
         const double& curr_timestamp = state->_timestamp;
         
         std::vector<int> marg_ids;
         
-        for (auto& item : map_server->_feats)
-            if (isStereo)
+        for (auto& item : *map_server)
+            if (!item.second->hasMonoObsAt(curr_timestamp))
             {
-                if (!item.second->hasStereoObsAt(curr_timestamp))
-                {
-                    item.second->_isToMarg = true;
+                item.second->_isToMarg = true;
                     
-                    if (item.second->_ftype == FeatureInfo::FeatureType::SLAM)
-                    {
-                        assert(item.second->_id == item.first);
-                        marg_ids.push_back(item.second->_id);
-                    }
-                }
-            }
-            else
-            {
-                if (!item.second->hasMonoObsAt(curr_timestamp))
+                if (item.second->_ftype == FeatureInfo::FeatureType::SLAM)
                 {
-                    item.second->_isToMarg = true;
-                    
-                    if (item.second->_ftype == FeatureInfo::FeatureType::SLAM)
-                    {
-                        assert(item.second->_id == item.first);
-                        marg_ids.push_back(item.second->_id);
-                    }
+                    assert(item.second->_id == item.first);
+                    marg_ids.push_back(item.second->_id);
                 }
             }
             
-            for (int i = 0; i < marg_ids.size(); ++i)
-            {
-                StateManager::margAnchoredLandmarkInState(state, marg_ids[i]);
+        for (int i = 0; i < marg_ids.size(); ++i)
+        {
+            StateManager::margAnchoredLandmarkInState(state, marg_ids[i]);
                 
-                map_server->_feats.erase(marg_ids[i]);
-            }
+            map_server->erase(marg_ids[i]);
+        }
     }
+    
+    void MapServerManager::markMargStereoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state)
+    {
+        const double& curr_timestamp = state->_timestamp;
+        
+        std::vector<int> marg_ids;
+        
+        for (auto& item : *map_server)
+        {
+            if (!item.second->hasStereoObsAt(curr_timestamp))
+            {
+                item.second->_isToMarg = true;
+                    
+                if (item.second->_ftype == FeatureInfo::FeatureType::SLAM)
+                {
+                    assert(item.second->_id == item.first);
+                    marg_ids.push_back(item.second->_id);
+                }
+            }
+        }
+            
+        for (int i = 0; i < marg_ids.size(); ++i)
+        {
+            StateManager::margAnchoredLandmarkInState(state, marg_ids[i]);
+                
+            map_server->erase(marg_ids[i]);
+        }
+    }
+    
+    bool FeatureInfoManager::triangulateFeatureInfoMono(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state)
+    {
+        Eigen::Vector3d pf;
+        
+        bool flag = tri->triangulateMonoObs(feature_info->_mono_obs, state->_sw_camleft_poses, pf);
+        
+        if (flag && !pf.hasNaN())
+        {
+            if (!feature_info->_isTri)
+                feature_info->_landmark->setFejPosXyz(pf);
+            
+            feature_info->_landmark->setValuePosXyz(pf);
+            feature_info->_isTri = true;
+            
+            return true;
+        }
+        else
+            return false;
+    }
+    
+    bool FeatureInfoManager::triangulateFeatureInfoStereo(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state)
+    {
+        Eigen::Vector3d pf;
+        
+        bool flag = tri->triangulateStereoObs(feature_info->_stereo_obs, state->_sw_camleft_poses, state->_state_params._T_cl2cr, pf);
+        
+        if (flag && !pf.hasNaN())
+        {
+            if (!feature_info->_isTri)
+                feature_info->_landmark->setFejPosXyz(pf);
+            
+            feature_info->_landmark->setValuePosXyz(pf);
+            feature_info->_isTri = true;
+            
+            return true;
+        }
+        else
+            return false;
+    }
+    
+    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, double target_sw_timestamp)
+    {
+        if (state->_sw_camleft_poses.size() < 2) return;
+        if (state->_sw_camleft_poses.find(target_sw_timestamp) == state->_sw_camleft_poses.end() || state->_anchored_landmarks.find(feature_info->getId()) == state->_anchored_landmarks.end())
+            return;
+        
+        if (feature_info->_ftype != FeatureInfo::FeatureType::SLAM) return;
+        
+        bool notFoundcurr = true;
+        for (const auto& item : state->_sw_camleft_poses)
+            if (item.second == feature_info->anchor())
+            {
+                notFoundcurr = false;
+                break;
+            }
+        
+        if (notFoundcurr || state->_anchored_landmarks.at(feature_info->getId()) != feature_info->landmark()) return;
+
+        std::vector<std::shared_ptr<Type>> var_order;
+        var_order.push_back(feature_info->anchor());
+        var_order.push_back(state->_sw_camleft_poses.at(target_sw_timestamp));
+        var_order.push_back(state->_anchored_landmarks.at(feature_info->getId()));
+        
+        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(3, 15);
+        const Eigen::Vector3d& pf = feature_info->landmark()->valuePosXyz();
+        
+        H.block<3, 3>(0, 0) = -skew(pf);
+        H.block<3, 3>(0, 6) = skew(pf);
+        H.block<3, 3>(0, 12) = Eigen::Matrix3d::Identity();
+        
+        StateManager::replaceVarLinear(state, feature_info->_landmark, var_order, H);
+        
+        feature_info->_landmark->resetAnchoredPose(state->_sw_camleft_poses.at(target_sw_timestamp), true);
+        
+    }
+    
+    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state)
+    {
+        if (state->_sw_camleft_poses.size() < 2) return;
+        
+        FeatureInfoManager::changeAnchoredPose(feature_info, state, state->_sw_camleft_poses.rbegin()->first);
+    }
+    
 }
 

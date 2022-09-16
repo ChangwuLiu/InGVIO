@@ -122,22 +122,14 @@ namespace ingvio
             w = std::sqrt(2.0*_huber_epsilon/e);
     }
     
-    bool Triangulator::triangulateMonoObs(const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, Eigen::Vector3d& pf) const
+    bool Triangulator::triangulateMonoObs(const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, Eigen::Vector3d& pf) const
     {
         std::map<double, std::shared_ptr<MonoMeas>> mobs;
+        std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_poses;
         
-        for (const auto& item : mono_obs)
-            if (sw_poses.find(item.first) != sw_poses.end())
-                mobs[item.first] = item.second;
+        this->filterCommonTimestamp<MonoMeas>(sw_poses_raw, mono_obs, sw_poses, mobs);
         
-        if (mobs.size() <= 3)
-        {
-            pf.setZero();
-            return false;
-        }
-        
-        if (mobs.size() < mono_obs.size())
-            std::cout << "[Triangulator]: Some mono meas not in sw!" << std::endl;
+        if (mobs.size() <= 2) return false;
         
         double max_trans;
         double max_timestamp = findLongestTrans(sw_poses, max_trans);
@@ -251,22 +243,12 @@ namespace ingvio
         return true;
     }
     
-    bool Triangulator::triangulateStereoObs(const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, const Eigen::Isometry3d& T_cl2cr, Eigen::Vector3d& pf) const
+    bool Triangulator::triangulateStereoObs(const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, const Eigen::Isometry3d& T_cl2cr, Eigen::Vector3d& pf) const
     {
         std::map<double, std::shared_ptr<StereoMeas>> sobs;
+        std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_poses;
         
-        for (const auto& item : stereo_obs)
-            if (sw_poses.find(item.first) != sw_poses.end())
-                sobs[item.first] = item.second;
-            
-        if (sobs.size() <= 1)
-        {
-            pf.setZero();
-            return false;
-        }
-        
-        if (sobs.size() < stereo_obs.size())
-            std::cout << "[Triangulator]: Some stereo meas not in sw!" << std::endl;
+        this->filterCommonTimestamp<StereoMeas>(sw_poses_raw, stereo_obs, sw_poses, sobs);
             
         std::map<double, std::shared_ptr<MonoMeas>> mono_obs;
         std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_mono_poses;
