@@ -64,6 +64,10 @@ namespace ingvio
         int _outer_loop_max_iter;
         int _inner_loop_max_iter;
         
+        int _chi2_max_dof;
+        double _chi2_thres;
+        double _visual_noise;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         

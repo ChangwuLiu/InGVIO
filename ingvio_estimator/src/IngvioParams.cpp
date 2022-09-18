@@ -62,7 +62,9 @@ namespace ingvio
         _outer_loop_max_iter = fs["outer_loop_max_iter"];
         _inner_loop_max_iter = fs["inner_loop_max_iter"];
         
-        
+        _chi2_max_dof = fs["chi2_max_dof"];
+        _chi2_thres = fs["chi2_thres"];
+        _visual_noise = fs["visual_noise"];
         
         if (_enable_gnss)
         {
@@ -188,6 +190,11 @@ namespace ingvio
         
         std::cout << "inner_loop_max_iter: " << _inner_loop_max_iter << std::endl;
 
+        std::cout << "chi2_max_dof: " << _chi2_max_dof << std::endl;
+         
+        std::cout << "chi2_thres: " << _chi2_thres << std::endl;
+        
+        std::cout << "visual_noise: " << _visual_noise << std::endl;
         
         if (_enable_gnss)
         {

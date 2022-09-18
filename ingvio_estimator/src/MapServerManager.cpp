@@ -13,7 +13,8 @@
 
 namespace ingvio
 {
-    std::shared_ptr<MonoMeas> MonoMeasManager::convertFromMsg(const feature_tracker::MonoMeas::ConstPtr& mono_msg)
+    std::shared_ptr<MonoMeas> MonoMeasManager::convertFromMsg(
+        const feature_tracker::MonoMeas::ConstPtr& mono_msg)
     {
         std::shared_ptr<MonoMeas> mono_meas = std::make_shared<MonoMeas>();
         
@@ -22,7 +23,8 @@ namespace ingvio
         return mono_meas;
     }
     
-    std::shared_ptr<MonoMeas> MonoMeasManager::convertFromMsg(const feature_tracker::MonoMeas& mono_msg)
+    std::shared_ptr<MonoMeas> MonoMeasManager::convertFromMsg(
+        const feature_tracker::MonoMeas& mono_msg)
     {
         std::shared_ptr<MonoMeas> mono_meas = std::make_shared<MonoMeas>();
         
@@ -44,7 +46,8 @@ namespace ingvio
         return mono_meas;
     }
     
-    std::shared_ptr<StereoMeas> StereoMeasManager::convertFromMsg(const feature_tracker::StereoMeas::ConstPtr& stereo_msg)
+    std::shared_ptr<StereoMeas> StereoMeasManager::convertFromMsg(
+        const feature_tracker::StereoMeas::ConstPtr& stereo_msg)
     {
         std::shared_ptr<StereoMeas> stereo_meas = std::make_shared<StereoMeas>();
         
@@ -53,7 +56,8 @@ namespace ingvio
         return stereo_meas;
     }
     
-    std::shared_ptr<StereoMeas> StereoMeasManager::convertFromMsg(const feature_tracker::StereoMeas& stereo_msg)
+    std::shared_ptr<StereoMeas> StereoMeasManager::convertFromMsg(
+        const feature_tracker::StereoMeas& stereo_msg)
     {
         std::shared_ptr<StereoMeas> stereo_meas = std::make_shared<StereoMeas>();
         
@@ -77,7 +81,9 @@ namespace ingvio
         return stereo_meas;
     }
     
-    void FeatureInfoManager::collectMonoMeas(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, std::shared_ptr<MonoMeas> mono_meas)
+    void FeatureInfoManager::collectMonoMeas(std::shared_ptr<FeatureInfo> feature_info,
+                                             std::shared_ptr<State> state,
+                                             std::shared_ptr<MonoMeas> mono_meas)
     {
         const double& timestamp = state->_timestamp;
         
@@ -117,7 +123,9 @@ namespace ingvio
         }
     }
     
-    void FeatureInfoManager::collectStereoMeas(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, std::shared_ptr<StereoMeas> stereo_meas)
+    void FeatureInfoManager::collectStereoMeas(std::shared_ptr<FeatureInfo> feature_info,
+                                               std::shared_ptr<State> state,
+                                               std::shared_ptr<StereoMeas> stereo_meas)
     {
         const double& timestamp = state->_timestamp;
         
@@ -157,7 +165,9 @@ namespace ingvio
         }
     }
     
-    void MapServerManager::collectMonoMeas(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, const feature_tracker::MonoFrame::ConstPtr& mono_frame_msg)
+    void MapServerManager::collectMonoMeas(std::shared_ptr<MapServer> map_server,
+                                           std::shared_ptr<State> state,
+                                           const feature_tracker::MonoFrame::ConstPtr& mono_frame_msg)
     {
         assert(mono_frame_msg->header.stamp.toSec() == state->_timestamp);
         
@@ -170,7 +180,9 @@ namespace ingvio
         }
     }
     
-    void MapServerManager::collectStereoMeas(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state, const feature_tracker::StereoFrame::ConstPtr& stereo_frame_msg)
+    void MapServerManager::collectStereoMeas(std::shared_ptr<MapServer> map_server,
+                                             std::shared_ptr<State> state,
+                                             const feature_tracker::StereoFrame::ConstPtr& stereo_frame_msg)
     {
         assert(stereo_frame_msg->header.stamp.toSec() == state->_timestamp);
         
@@ -183,7 +195,8 @@ namespace ingvio
         }
     }
     
-    void MapServerManager::markMargMonoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state)
+    void MapServerManager::markMargMonoFeatures(std::shared_ptr<MapServer> map_server,
+                                                std::shared_ptr<State> state)
     {
         const double& curr_timestamp = state->_timestamp;
         
@@ -209,7 +222,8 @@ namespace ingvio
         }
     }
     
-    void MapServerManager::markMargStereoFeatures(std::shared_ptr<MapServer> map_server, std::shared_ptr<State> state)
+    void MapServerManager::markMargStereoFeatures(std::shared_ptr<MapServer> map_server,
+                                                  std::shared_ptr<State> state)
     {
         const double& curr_timestamp = state->_timestamp;
         
@@ -237,7 +251,10 @@ namespace ingvio
         }
     }
     
-    bool FeatureInfoManager::triangulateFeatureInfoMono(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state)
+    bool FeatureInfoManager::triangulateFeatureInfoMono(
+        std::shared_ptr<FeatureInfo> feature_info,
+        const std::shared_ptr<Triangulator> tri,
+        const std::shared_ptr<State> state)
     {
         Eigen::Vector3d pf;
         
@@ -257,7 +274,10 @@ namespace ingvio
             return false;
     }
     
-    bool FeatureInfoManager::triangulateFeatureInfoStereo(std::shared_ptr<FeatureInfo> feature_info, const std::shared_ptr<Triangulator> tri, const std::shared_ptr<State> state)
+    bool FeatureInfoManager::triangulateFeatureInfoStereo(
+        std::shared_ptr<FeatureInfo> feature_info,
+        const std::shared_ptr<Triangulator> tri,
+        const std::shared_ptr<State> state)
     {
         Eigen::Vector3d pf;
         
@@ -277,7 +297,9 @@ namespace ingvio
             return false;
     }
     
-    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state, double target_sw_timestamp)
+    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info,
+                                                std::shared_ptr<State> state,
+                                                double target_sw_timestamp)
     {
         if (state->_sw_camleft_poses.size() < 2) return;
         if (state->_sw_camleft_poses.find(target_sw_timestamp) == state->_sw_camleft_poses.end() || state->_anchored_landmarks.find(feature_info->getId()) == state->_anchored_landmarks.end())
@@ -313,7 +335,8 @@ namespace ingvio
         
     }
     
-    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info, std::shared_ptr<State> state)
+    void FeatureInfoManager::changeAnchoredPose(std::shared_ptr<FeatureInfo> feature_info,
+                                                std::shared_ptr<State> state)
     {
         if (state->_sw_camleft_poses.size() < 2) return;
         

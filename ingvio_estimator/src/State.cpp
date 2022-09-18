@@ -103,7 +103,12 @@ namespace ingvio
         _camleft_imu_extrinsics->setValueByIso(Eigen::Isometry3d::Identity());
     }
     
-    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba)
+    void State::initStateAndCov(double init_timestamp,
+                                const Eigen::Quaterniond& init_quat_i2w,
+                                const Eigen::Vector3d& init_pos,
+                                const Eigen::Vector3d& init_vel,
+                                const Eigen::Vector3d& init_bg,
+                                const Eigen::Vector3d& init_ba)
     {
         _timestamp = init_timestamp;
         
@@ -141,12 +146,15 @@ namespace ingvio
         this->_camleft_imu_extrinsics->setValueByIso(_state_params._T_cl2i);
     }
     
-    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos)
+    void State::initStateAndCov(double init_timestamp,
+                                const Eigen::Quaterniond& init_quat_i2w,
+                                const Eigen::Vector3d& init_pos)
     {
         this->initStateAndCov(init_timestamp, init_quat_i2w, init_pos, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
     }
     
-    void State::initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w)
+    void State::initStateAndCov(double init_timestamp,
+                                const Eigen::Quaterniond& init_quat_i2w)
     {
         this->initStateAndCov(init_timestamp, init_quat_i2w, Eigen::Vector3d::Zero());
     }

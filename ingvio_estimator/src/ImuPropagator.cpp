@@ -75,7 +75,12 @@ namespace ingvio
         return true;
     }
     
-    void ImuPropagator::stateAndCovTransition(std::shared_ptr<State> state, const ImuCtrl& imu_ctrl, double dt, Eigen::Matrix<double, 15, 15>& Phi, Eigen::Matrix<double, 15, 12>& G, bool isAnalytic)
+    void ImuPropagator::stateAndCovTransition(std::shared_ptr<State> state,
+                                              const ImuCtrl& imu_ctrl,
+                                              double dt,
+                                              Eigen::Matrix<double, 15, 15>& Phi,
+                                              Eigen::Matrix<double, 15, 12>& G,
+                                              bool isAnalytic)
     {        
         Phi.setIdentity();
         G.setZero();
@@ -204,7 +209,9 @@ namespace ingvio
         }
     }
     
-    void ImuPropagator::propagateUntil(std::shared_ptr<State> state, double t_end, bool isAnalytic)
+    void ImuPropagator::propagateUntil(std::shared_ptr<State> state,
+                                       double t_end,
+                                       bool isAnalytic)
     {
         if (!_has_gravity_set || t_end <= state->_timestamp) return;
         
@@ -264,7 +271,9 @@ namespace ingvio
         _imu_ctrl_buffer.erase(_imu_ctrl_buffer.begin(), _imu_ctrl_buffer.begin()+propa_cnt);
     }
     
-    void ImuPropagator::propagateAugmentAtEnd(std::shared_ptr<State> state, double t_end, bool isAnalytic)
+    void ImuPropagator::propagateAugmentAtEnd(std::shared_ptr<State> state,
+                                              double t_end,
+                                              bool isAnalytic)
     {
         if (!_has_gravity_set) return;
         
@@ -284,7 +293,9 @@ namespace ingvio
         StateManager::augmentSlidingWindowPose(state);
     }
     
-    void ImuPropagator::propagateToExpectedPoseAndAugment(std::shared_ptr<State> state, double t_end, const Eigen::Isometry3d& T_i2w)
+    void ImuPropagator::propagateToExpectedPoseAndAugment(std::shared_ptr<State> state,
+                                                          double t_end,
+                                                          const Eigen::Isometry3d& T_i2w)
     {
         if (!_has_gravity_set) return;
         

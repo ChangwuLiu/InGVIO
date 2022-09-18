@@ -134,13 +134,24 @@ namespace ingvio
         const bool& isInit() const
         { return _has_gravity_set; }
         
-        void stateAndCovTransition(std::shared_ptr<State> state, const ImuCtrl& imu_ctrl, double dt, Eigen::Matrix<double, 15, 15>& Phi, Eigen::Matrix<double, 15, 12>& G, bool isAnalytic = true);
+        void stateAndCovTransition(std::shared_ptr<State> state,
+                                   const ImuCtrl& imu_ctrl,
+                                   double dt,
+                                   Eigen::Matrix<double, 15, 15>& Phi,
+                                   Eigen::Matrix<double, 15, 12>& G,
+                                   bool isAnalytic = true);
         
-        void propagateUntil(std::shared_ptr<State> state, double t_end, bool isAnalytic = true);
+        void propagateUntil(std::shared_ptr<State> state,
+                            double t_end,
+                            bool isAnalytic = true);
         
-        void propagateAugmentAtEnd(std::shared_ptr<State> state, double t_end, bool isAnalytic = true);
+        void propagateAugmentAtEnd(std::shared_ptr<State> state,
+                                   double t_end,
+                                   bool isAnalytic = true);
         
-        void propagateToExpectedPoseAndAugment(std::shared_ptr<State> state, double t_end, const Eigen::Isometry3d& T_i2w);
+        void propagateToExpectedPoseAndAugment(std::shared_ptr<State> state,
+                                               double t_end,
+                                               const Eigen::Isometry3d& T_i2w);
         
     protected:
         

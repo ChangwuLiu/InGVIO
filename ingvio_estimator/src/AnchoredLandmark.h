@@ -114,7 +114,8 @@ namespace ingvio
             xyz.y() = r*std::sin(bear.x())*std::sin(bear.y());
         }
         
-        void resetAnchoredPose(std::shared_ptr<SE3> new_anchored_pose = nullptr, bool isUpdateRepValue = false)
+        void resetAnchoredPose(std::shared_ptr<SE3> new_anchored_pose = nullptr,
+                               bool isUpdateRepValue = false)
         {
             if (new_anchored_pose != nullptr)
             {

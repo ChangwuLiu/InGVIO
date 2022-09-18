@@ -5,7 +5,9 @@
 
 namespace ingvio
 {
-    double Triangulator::findLongestTrans(const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, double& max_length) const
+    double Triangulator::findLongestTrans(
+        const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,
+        double& max_length) const
     {
         assert(sw_poses.size() >= 2);
         
@@ -30,7 +32,9 @@ namespace ingvio
         return max_timestamp;
     }
     
-    void Triangulator::calcRelaSwPose(const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses, std::map<double, std::shared_ptr<SE3>, std::less<double>>& rel_sw_poses) const
+    void Triangulator::calcRelaSwPose(
+        const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,
+        std::map<double, std::shared_ptr<SE3>, std::less<double>>& rel_sw_poses) const
     {
         const std::shared_ptr<SE3> pose0 = sw_poses.begin()->second;
         const double timestamp0 = sw_poses.begin()->first;
@@ -49,7 +53,9 @@ namespace ingvio
         }
     }
     
-    double Triangulator::initDepth(const Eigen::Vector2d& m1, const Eigen::Vector2d& m2, const std::shared_ptr<SE3> T12) const
+    double Triangulator::initDepth(const Eigen::Vector2d& m1,
+                                   const Eigen::Vector2d& m2,
+                                   const std::shared_ptr<SE3> T12) const
     {
         Eigen::Vector3d tilde_m1 = T12->valueLinearAsMat()*Eigen::Vector3d(m1.x(), m1.y(), 1.0);
         Eigen::Vector3d t = T12->valueTrans();
@@ -65,7 +71,9 @@ namespace ingvio
         return (A.transpose()*A).inverse()*A.transpose()*b;
     }
     
-    double Triangulator::calcUnitCost(const Eigen::Vector2d& meas, const std::shared_ptr<SE3> rel_pose, const Eigen::Vector3d& solution) const
+    double Triangulator::calcUnitCost(const Eigen::Vector2d& meas,
+                                      const std::shared_ptr<SE3> rel_pose,
+                                      const Eigen::Vector3d& solution) const
     {
         Eigen::Vector3d pf0;
         
@@ -82,7 +90,9 @@ namespace ingvio
         return (meas-meas_hat).squaredNorm();
     }
     
-    double Triangulator::calcTotalCost(const std::map<double, std::shared_ptr<MonoMeas>>& mobs, const std::map<double, std::shared_ptr<SE3>>& rel_poses, const Eigen::Vector3d& solution) const
+    double Triangulator::calcTotalCost(const std::map<double, std::shared_ptr<MonoMeas>>& mobs,
+                                       const std::map<double, std::shared_ptr<SE3>>& rel_poses,
+                                       const Eigen::Vector3d& solution) const
     {
         double total_cost = 0.0;
         
@@ -92,7 +102,12 @@ namespace ingvio
         return total_cost;
     }
     
-    void Triangulator::calcResJacobian(const Eigen::Vector2d& meas, const std::shared_ptr<SE3> rel_pose, const Eigen::Vector3d& solution, Eigen::Vector2d& res, Eigen::Matrix<double, 2, 3>& J, double& w) const
+    void Triangulator::calcResJacobian(const Eigen::Vector2d& meas,
+                                       const std::shared_ptr<SE3> rel_pose,
+                                       const Eigen::Vector3d& solution,
+                                       Eigen::Vector2d& res,
+                                       Eigen::Matrix<double, 2, 3>& J,
+                                       double& w) const
     {
         Eigen::Vector3d tilde_pf_hat = rel_pose->valueLinearAsMat()*Eigen::Vector3d(solution.x(), solution.y(), 1.0)+rel_pose->valueTrans()*solution.z();
         
@@ -122,7 +137,10 @@ namespace ingvio
             w = std::sqrt(2.0*_huber_epsilon/e);
     }
     
-    bool Triangulator::triangulateMonoObs(const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, Eigen::Vector3d& pf) const
+    bool Triangulator::triangulateMonoObs(
+        const std::map<double, std::shared_ptr<MonoMeas>>& mono_obs,
+        const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw,
+        Eigen::Vector3d& pf) const
     {
         std::map<double, std::shared_ptr<MonoMeas>> mobs;
         std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_poses;
@@ -243,7 +261,11 @@ namespace ingvio
         return true;
     }
     
-    bool Triangulator::triangulateStereoObs(const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs, const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw, const Eigen::Isometry3d& T_cl2cr, Eigen::Vector3d& pf) const
+    bool Triangulator::triangulateStereoObs(
+        const std::map<double, std::shared_ptr<StereoMeas>>& stereo_obs,
+        const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses_raw,
+        const Eigen::Isometry3d& T_cl2cr,
+        Eigen::Vector3d& pf) const
     {
         std::map<double, std::shared_ptr<StereoMeas>> sobs;
         std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_poses;

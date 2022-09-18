@@ -30,7 +30,18 @@ include_directories(
 )
 
 add_executable(ingvio 
+    ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+    ${PROJECT_SOURCE_DIR}/src/ImuPropagator.cpp
+    ${PROJECT_SOURCE_DIR}/src/IngvioFilter.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioNode.cpp
+    ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
+    ${PROJECT_SOURCE_DIR}/src/MapServerManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/RemoveLostUpdate.cpp
+    ${PROJECT_SOURCE_DIR}/src/State.cpp
+    ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/SwMargUpdate.cpp
+    ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
+    ${PROJECT_SOURCE_DIR}/src/Update.cpp
 )
 
 list(APPEND thirdparty_libs 

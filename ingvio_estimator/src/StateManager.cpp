@@ -19,7 +19,10 @@ namespace ingvio
             return false;
     }  
     
-    void StateManager::propagateStateCov(std::shared_ptr<State> state, const Eigen::Matrix<double, 15, 15>& Phi_imu, const Eigen::Matrix<double, 15, 12>& G_imu, double dt)
+    void StateManager::propagateStateCov(std::shared_ptr<State> state,
+                                         const Eigen::Matrix<double, 15, 15>& Phi_imu,
+                                         const Eigen::Matrix<double, 15, 12>& G_imu,
+                                         double dt)
     {
         assert(StateManager::checkStateContinuity(state));
         
@@ -102,7 +105,8 @@ namespace ingvio
         return cov;
     }
     
-    Eigen::MatrixXd StateManager::getMarginalCov(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& small_variables)
+    Eigen::MatrixXd StateManager::getMarginalCov(std::shared_ptr<State> state,
+                                                 const std::vector<std::shared_ptr<Type>>& small_variables)
     {
         int small_cov_size = 0;
         
@@ -167,7 +171,9 @@ namespace ingvio
         state->_err_variables = remaining_variables;
     }
     
-    void StateManager::addVariableIndependent(std::shared_ptr<State> state, std::shared_ptr<Type> new_state, const Eigen::MatrixXd& new_state_cov_block)
+    void StateManager::addVariableIndependent(std::shared_ptr<State> state,
+                                              std::shared_ptr<Type> new_state,
+                                              const Eigen::MatrixXd& new_state_cov_block)
     {
         assert(new_state->size() == new_state_cov_block.rows());
         
@@ -187,7 +193,10 @@ namespace ingvio
         assert(StateManager::checkStateContinuity(state));
     }
     
-    void StateManager::addGNSSVariable(std::shared_ptr<State> state, const State::GNSSType& gtype, double value, double cov)
+    void StateManager::addGNSSVariable(std::shared_ptr<State> state,
+                                       const State::GNSSType& gtype,
+                                       double value,
+                                       double cov)
     {
         if (state->_gnss.find(gtype) != state->_gnss.end())
             std::cout << "[StateManager]: GNSS variable already in the state, adding operation will rewrite such var!" << std::endl;
@@ -201,7 +210,8 @@ namespace ingvio
         StateManager::addVariableIndependent(state, state->_gnss[gtype], scalar_cov);
     }
     
-    void StateManager::margGNSSVariable(std::shared_ptr<State> state, const State::GNSSType& gtype)
+    void StateManager::margGNSSVariable(std::shared_ptr<State> state,
+                                        const State::GNSSType& gtype)
     {
         if (state->_gnss.find(gtype) == state->_gnss.end())
             std::cout << "[StateManager]: GNSS variable not in the state, no need to marg!" << std::endl;
@@ -265,7 +275,10 @@ namespace ingvio
         assert(checkStateContinuity(state));
     }
     
-    void StateManager::addAnchoredLandmarkInState(std::shared_ptr<State> state, std::shared_ptr<AnchoredLandmark> anchored_landmark, int lm_id, const Eigen::Matrix3d& cov)
+    void StateManager::addAnchoredLandmarkInState(std::shared_ptr<State> state,
+                                                  std::shared_ptr<AnchoredLandmark> anchored_landmark,
+                                                  int lm_id,
+                                                  const Eigen::Matrix3d& cov)
     {
         if (state->_anchored_landmarks.find(lm_id) != state->_anchored_landmarks.end())
         {
@@ -319,7 +332,11 @@ namespace ingvio
         assert(StateManager::checkStateContinuity(state));
     }
     
-    void StateManager::ekfUpdate(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& var_order, const Eigen::MatrixXd& H, const Eigen::VectorXd& res, const Eigen::MatrixXd& R)
+    void StateManager::ekfUpdate(std::shared_ptr<State> state,
+                                 const std::vector<std::shared_ptr<Type>>& var_order,
+                                 const Eigen::MatrixXd& H,
+                                 const Eigen::VectorXd& res,
+                                 const Eigen::MatrixXd& R)
     {
         assert(res.rows() == R.rows());
         assert(H.rows() == res.rows());
@@ -384,7 +401,8 @@ namespace ingvio
         StateManager::boxPlus(state, dx);
     }
     
-    bool StateManager::checkSubOrder(std::shared_ptr<State> state, const std::vector<std::shared_ptr<Type>>& sub_order)
+    bool StateManager::checkSubOrder(std::shared_ptr<State> state,
+                                     const std::vector<std::shared_ptr<Type>>& sub_order)
     {
         auto isFound = [&state] (const std::shared_ptr<Type>& var)
         {
@@ -413,7 +431,13 @@ namespace ingvio
         return total_size;
     }
     
-    void StateManager::addVariableDelayedInvertible(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, const Eigen::MatrixXd& H_old, const Eigen::MatrixXd& H_new, const Eigen::VectorXd& res, double noise_iso_meas)
+    void StateManager::addVariableDelayedInvertible(std::shared_ptr<State> state,
+                                                    std::shared_ptr<Type> var_new,
+                                                    const std::vector<std::shared_ptr<Type>>& var_old_order,
+                                                    const Eigen::MatrixXd& H_old,
+                                                    const Eigen::MatrixXd& H_new,
+                                                    const Eigen::VectorXd& res,
+                                                    double noise_iso_meas)
     {
         if (std::find(state->_err_variables.begin(), state->_err_variables.end(), var_new) != state->_err_variables.end())
         {
@@ -488,7 +512,15 @@ namespace ingvio
         state->_cov = 0.5*(cov_tmp + cov_tmp.transpose());
     }
     
-    void StateManager::addVariableDelayed(std::shared_ptr<State> state, std::shared_ptr<Type> var_new, const std::vector<std::shared_ptr<Type>>& var_old_order, Eigen::MatrixXd& H_old, Eigen::MatrixXd& H_new, Eigen::VectorXd& res, double noise_iso_meas, double chi2_mult_factor, bool do_chi2)
+    void StateManager::addVariableDelayed(std::shared_ptr<State> state,
+                                          std::shared_ptr<Type> var_new,
+                                          const std::vector<std::shared_ptr<Type>>& var_old_order,
+                                          Eigen::MatrixXd& H_old,
+                                          Eigen::MatrixXd& H_new,
+                                          Eigen::VectorXd& res,
+                                          double noise_iso_meas,
+                                          double chi2_mult_factor,
+                                          bool do_chi2)
     {
         if (std::find(state->_err_variables.begin(), state->_err_variables.end(), var_new) != state->_err_variables.end())
         {
@@ -563,7 +595,10 @@ namespace ingvio
             StateManager::ekfUpdate(state, var_old_order, Hup, resup, std::pow(noise_iso_meas, 2.0)*Eigen::MatrixXd::Identity(resup.rows(), resup.rows()));
     }
     
-    void StateManager::replaceVarLinear(std::shared_ptr<State> state, const std::shared_ptr<Type> target_var, const std::vector<std::shared_ptr<Type>>& dependence_order, const Eigen::MatrixXd& H)
+    void StateManager::replaceVarLinear(std::shared_ptr<State> state,
+                                        const std::shared_ptr<Type> target_var,
+                                        const std::vector<std::shared_ptr<Type>>& dependence_order,
+                                        const Eigen::MatrixXd& H)
     {
         bool notFound = true;
         for (const auto& item : state->_err_variables)

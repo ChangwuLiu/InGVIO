@@ -92,7 +92,9 @@ namespace ingvio
         return result;
     }
     
-    Eigen::Matrix3d Psi1Func(const Eigen::Vector3d& tilde_omega, const Eigen::Vector3d& tilde_acc, double dt)
+    Eigen::Matrix3d Psi1Func(const Eigen::Vector3d& tilde_omega,
+                             const Eigen::Vector3d& tilde_acc,
+                             double dt)
     {
         if ((tilde_omega*dt).norm() < 1e-08) return Eigen::Matrix3d::Zero();
         
@@ -143,7 +145,9 @@ namespace ingvio
         return result;
     }
     
-    Eigen::Matrix3d Psi2Func(const Eigen::Vector3d& tilde_omega, const Eigen::Vector3d& tilde_acc, double dt)
+    Eigen::Matrix3d Psi2Func(const Eigen::Vector3d& tilde_omega,
+                             const Eigen::Vector3d& tilde_acc,
+                             double dt)
     {
         if ((tilde_omega*dt).norm() < 1e-07)
             return Eigen::Matrix3d::Zero();

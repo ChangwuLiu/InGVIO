@@ -71,11 +71,19 @@ namespace ingvio
             return time;
         }
         
-        void initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w);
+        void initStateAndCov(double init_timestamp,
+                             const Eigen::Quaterniond& init_quat_i2w);
         
-        void initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos);
+        void initStateAndCov(double init_timestamp,
+                             const Eigen::Quaterniond& init_quat_i2w,
+                             const Eigen::Vector3d& init_pos);
         
-        void initStateAndCov(double init_timestamp, const Eigen::Quaterniond& init_quat_i2w, const Eigen::Vector3d& init_pos, const Eigen::Vector3d& init_vel, const Eigen::Vector3d& init_bg, const Eigen::Vector3d& init_ba);
+        void initStateAndCov(double init_timestamp,
+                             const Eigen::Quaterniond& init_quat_i2w,
+                             const Eigen::Vector3d& init_pos,
+                             const Eigen::Vector3d& init_vel,
+                             const Eigen::Vector3d& init_bg,
+                             const Eigen::Vector3d& init_ba);
         
         int curr_cov_size() { return _cov.rows(); }
         int curr_err_variable_size() { return _err_variables.size();}
