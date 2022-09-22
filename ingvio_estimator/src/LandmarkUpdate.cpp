@@ -363,7 +363,7 @@ namespace ingvio
         Eigen::Matrix3d R_w2cl = R_cl2i_T*R_i2w_T;
         
         H_fj_epose.setZero();
-        H_fj_epose.block<2, 3>(0, 0) = H_proj*R_w2cl*skew(p_i2w);
+        H_fj_epose.block<2, 3>(0, 0) = H_proj*R_w2cl*skew(pf_w);
         H_fj_epose.block<2, 3>(0, 3) = -H_proj*R_w2cl;
         
         H_fj_ext.setZero();
