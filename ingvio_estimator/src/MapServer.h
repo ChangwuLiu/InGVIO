@@ -75,7 +75,7 @@ namespace ingvio
     public:
         enum FeatureType {MSCKF = 0, SLAM};
         
-        FeatureInfo() : _id(-1), _ftype(MSCKF), _isToMarg(false), _isTri(false) 
+        FeatureInfo() : _id(-1), _ftype(MSCKF), _isToMarg(false), _isTri(false), _numOfTri(0) 
         {
             _mono_obs.clear();
             _stereo_obs.clear();
@@ -141,6 +141,7 @@ namespace ingvio
         FeatureType _ftype;
         bool _isToMarg;
         bool _isTri;
+        int _numOfTri;
         
         std::shared_ptr<AnchoredLandmark> _landmark;
         

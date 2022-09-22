@@ -39,6 +39,7 @@ add_executable(ingvio
     ${PROJECT_SOURCE_DIR}/src/RemoveLostUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/State.cpp
     ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/LandmarkUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/SwMargUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
     ${PROJECT_SOURCE_DIR}/src/Update.cpp

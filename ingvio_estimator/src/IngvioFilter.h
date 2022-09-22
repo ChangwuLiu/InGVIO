@@ -21,6 +21,7 @@ namespace ingvio
     class Triangulator;
     class RemoveLostUpdate;
     class SwMargUpdate;
+    class LandmarkUpdate;
     
     class IngvioFilter
     {
@@ -62,6 +63,8 @@ namespace ingvio
         std::shared_ptr<RemoveLostUpdate> _remove_lost_update;
         
         std::shared_ptr<SwMargUpdate> _sw_marg_update;
+        
+        std::shared_ptr<LandmarkUpdate> _landmark_update;
         
         void callbackMonoFrame(const feature_tracker::MonoFrameConstPtr& mono_frame_ptr);
         

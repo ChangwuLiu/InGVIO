@@ -24,6 +24,9 @@ namespace ingvio
             _init_damping = filter_params._init_damping;
             _outer_loop_max_iter = filter_params._outer_loop_max_iter;
             _inner_loop_max_iter = filter_params._inner_loop_max_iter;
+            _max_depth = filter_params._max_depth;
+            _min_depth = filter_params._min_depth;
+            _max_baseline_ratio = filter_params._max_baseline_ratio;
         }
         
         ~Triangulator() {}
@@ -47,6 +50,10 @@ namespace ingvio
         double _init_damping = 1e-3;
         int _outer_loop_max_iter = 10;
         int _inner_loop_max_iter = 10;
+        
+        double _max_depth = 60.0;
+        double _min_depth = 0.2;
+        double _max_baseline_ratio = 40.0;
         
         double findLongestTrans(
             const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,

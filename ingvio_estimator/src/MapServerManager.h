@@ -105,5 +105,9 @@ namespace ingvio
         static void markMargStereoFeatures(std::shared_ptr<MapServer> map_server,
                                            std::shared_ptr<State> state);
         
+        static void mapStatistics(const std::shared_ptr<MapServer> map_server);
+        
+        static void checkMapStateConsistent(const std::shared_ptr<MapServer> map_server,
+                                            const std::shared_ptr<State> state);
     };
 }

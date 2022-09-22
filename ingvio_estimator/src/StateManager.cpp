@@ -512,7 +512,7 @@ namespace ingvio
         state->_cov = 0.5*(cov_tmp + cov_tmp.transpose());
     }
     
-    void StateManager::addVariableDelayed(std::shared_ptr<State> state,
+    bool StateManager::addVariableDelayed(std::shared_ptr<State> state,
                                           std::shared_ptr<Type> var_new,
                                           const std::vector<std::shared_ptr<Type>>& var_old_order,
                                           Eigen::MatrixXd& H_old,
@@ -525,7 +525,7 @@ namespace ingvio
         if (std::find(state->_err_variables.begin(), state->_err_variables.end(), var_new) != state->_err_variables.end())
         {
             std::cout << "[StateManager]: New var already in state! Cannot perform add var delayed inv!" << std::endl;
-            return;
+            return false;
         }
         
         int old_sub_var_size = StateManager::calcSubVarSize(var_old_order);
@@ -542,7 +542,7 @@ namespace ingvio
         if (H_new.rows() <= H_new.cols())
         {
             std::cout << "[StateManager]: H_new rows should be larger than H_new cols!" << std::endl;
-            return;
+            return false;
         }
         
         Eigen::JacobiRotation<double> tmpG;
@@ -585,7 +585,7 @@ namespace ingvio
         if (chi2 > chi2_mult_factor * chi2_check && do_chi2)
         {
             std::cout << "[StateManager]: Cannot add variable due to chi2 test failure!" << std::endl;
-            return;
+            return false;
         }
         
         StateManager::addVariableDelayedInvertible(state, var_new, var_old_order, Hxinit, Hfinit, resinit, noise_iso_meas);
@@ -593,6 +593,8 @@ namespace ingvio
         
         if (Hup.rows() > 0)
             StateManager::ekfUpdate(state, var_old_order, Hup, resup, std::pow(noise_iso_meas, 2.0)*Eigen::MatrixXd::Identity(resup.rows(), resup.rows()));
+        
+        return true;
     }
     
     void StateManager::replaceVarLinear(std::shared_ptr<State> state,

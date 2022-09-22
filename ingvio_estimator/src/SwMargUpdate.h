@@ -14,7 +14,10 @@ namespace ingvio
     public:
         using UpdateBase::UpdateBase;
         
-        SwMargUpdate(const IngvioParams& filter_params) : UpdateBase(filter_params._chi2_max_dof, filter_params._chi2_thres), _noise(filter_params._visual_noise)
+        SwMargUpdate(const IngvioParams& filter_params) : 
+        UpdateBase(filter_params._chi2_max_dof, filter_params._chi2_thres),
+        _noise(filter_params._visual_noise),
+        _frame_select_interval(filter_params._frame_select_interval)
         {}
         
         SwMargUpdate(const SwMargUpdate&) = delete;
@@ -41,9 +44,17 @@ namespace ingvio
         
         void margSwPose(std::shared_ptr<State> state);
         
+        void removeMonoMSCKFinMargPose(std::shared_ptr<State> state,
+                                   std::shared_ptr<MapServer> map_server);
+        
+        void removeStereoMSCKFinMargPose(std::shared_ptr<State> state,
+                                         std::shared_ptr<MapServer> map_server);
+        
     protected:
         
         double _noise;
+        
+        int _frame_select_interval;
         
         void generateSwVarOrder(const std::shared_ptr<State> state,
                                 std::vector<std::shared_ptr<SE3>>& sw_var_order,

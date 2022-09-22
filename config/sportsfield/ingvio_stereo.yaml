@@ -8,10 +8,10 @@ cam_nums: 2
 cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_left_config.yaml"
 cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_right_config.yaml"
 
-max_sliding_window_poses: 20
+max_sliding_window_poses: 15
 max_landmark_features: 25
 
-enable_gnss: 1
+enable_gnss: 0
 
 noise_gyro: 0.005
 noise_accel: 0.05
@@ -35,13 +35,17 @@ gravity_norm: 9.8
 max_imu_buffer_size: 1000
 init_imu_buffer_sp: 100
 
-trans_thres: 0.1
+trans_thres: 0.25
 huber_epsilon: 0.01
 conv_precision: 5e-07
 init_damping: 1e-03
 outer_loop_max_iter: 10
 inner_loop_max_iter: 10
+max_depth: 60.0
+min_depth: 0.2
+max_baseline_ratio: 80.0
 
 chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
+frame_select_interval: 5

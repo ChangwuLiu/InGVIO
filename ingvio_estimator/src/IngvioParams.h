@@ -63,10 +63,15 @@ namespace ingvio
         double _init_damping;
         int _outer_loop_max_iter;
         int _inner_loop_max_iter;
+        double _max_depth;
+        double _min_depth;
+        double _max_baseline_ratio;
         
         int _chi2_max_dof;
         double _chi2_thres;
         double _visual_noise;
+        
+        int _frame_select_interval;
         
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);

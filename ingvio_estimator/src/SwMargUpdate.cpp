@@ -15,6 +15,8 @@
 
 #include "SwMargUpdate.h"
 
+#include "TicToc.h"
+
 namespace ingvio
 {
     void SwMargUpdate::updateStateMono(std::shared_ptr<State> state,
@@ -27,6 +29,7 @@ namespace ingvio
         
         std::vector<int> update_ids;
         
+        
         for (const auto& item : *map_server)
         {
             if (item.second->_mono_obs.find(marg_time) == item.second->_mono_obs.end())
@@ -35,6 +38,7 @@ namespace ingvio
             if (item.second->_ftype == FeatureInfo::FeatureType::MSCKF &&
                 FeatureInfoManager::triangulateFeatureInfoMono(item.second, tri, state))
                 update_ids.push_back(item.first);
+            
         }
         
         if (update_ids.size() == 0) return;
@@ -67,10 +71,10 @@ namespace ingvio
             Eigen::MatrixXd H_block;
             
             this->calcResJacobianSingleFeatSelectedMonoObs(map_server->at(update_ids[i]),
-                                                      state->_sw_camleft_poses,
-                                                      sw_var_order, sw_index_map,
-                                                      selected_timestamps,
-                                                      res_block, H_block);
+                                                           state->_sw_camleft_poses,
+                                                           sw_var_order, sw_index_map,
+                                                           selected_timestamps,
+                                                           res_block, H_block);
             
             if (!testChiSquared(state, res_block, H_block, sw_var_type, this->_noise))
                 continue;
@@ -160,6 +164,7 @@ namespace ingvio
                 FeatureInfoManager::triangulateFeatureInfoStereo(item.second, tri, state) &&
                 item.second->numOfStereoFrames() >= 3)
                 update_ids.push_back(item.first);
+
         }
         
         if (update_ids.size() == 0) return;
@@ -255,6 +260,8 @@ namespace ingvio
         
         const std::shared_ptr<SE3> new_anchor = state->_sw_camleft_poses.at(latest_sw);
         
+        std::vector<int> ids_to_marg;
+        
         for (auto& item : *map_server)
         {
             if (item.second->_ftype != FeatureInfo::FeatureType::MSCKF)
@@ -262,12 +269,27 @@ namespace ingvio
                 
             if (item.second->_landmark->getAnchoredPose() == old_anchor)
             {
+                
                 if (item.second->_isTri)
+                {
+                    const Eigen::Vector3d pf = item.second->_landmark->valuePosXyz();
+                    const Eigen::Vector3d body = new_anchor->valueLinearAsMat().transpose()*(pf - new_anchor->valueTrans());
+                    
+                    if (body.z() <= 0)
+                    {
+                        ids_to_marg.push_back(item.first);
+                        continue;
+                    }
+
                     item.second->_landmark->resetAnchoredPose(new_anchor, true);
+                }
                 else
-                    item.second->_landmark->resetAnchoredPose(new_anchor);
+                    ids_to_marg.push_back(item.first);
             }
         }
+        
+        for (const int& id: ids_to_marg)
+            map_server->erase(id);
     }
     
     void SwMargUpdate::margSwPose(std::shared_ptr<State> state)
@@ -344,10 +366,11 @@ namespace ingvio
                 continue;
             }
             
-            if (cnt % 2 == 0) selected_timestamps.push_back(item.first);
+            if (cnt % _frame_select_interval == 0) selected_timestamps.push_back(item.first);
             
             ++cnt;
         }
+    
     }
     
     void SwMargUpdate::calcResJacobianSingleFeatSelectedMonoObs(
@@ -362,7 +385,7 @@ namespace ingvio
         const int num_of_cols = 6*sw_var_order.size();
         const int num_of_rows = 2*selected_timestamps.size();
         
-        Eigen::MatrixXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
+        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
         Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, num_of_cols);
         Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, 3);
         
@@ -437,7 +460,7 @@ namespace ingvio
         const int num_of_cols = 6*sw_var_order.size();
         const int num_of_rows = 4*selected_timestamps.size();
         
-        Eigen::MatrixXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
+        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
         Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, num_of_cols);
         Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, 3);
         
@@ -511,4 +534,39 @@ namespace ingvio
         res_block = V.transpose()*res_block_tmp;
     }
     
+    void SwMargUpdate::removeMonoMSCKFinMargPose(std::shared_ptr<State> state,
+                                             std::shared_ptr<MapServer> map_server)
+    {
+        const double marg_time = state->nextMargTime();
+        
+        if (marg_time == INFINITY) return;
+        
+        std::vector<int> ids_to_marg;
+        
+        for (const auto& item : *map_server)
+            if (item.second->_mono_obs.find(marg_time) != item.second->_mono_obs.end() &&
+                item.second->_ftype == FeatureInfo::FeatureType::MSCKF)
+                ids_to_marg.push_back(item.first);
+        
+        for (const int& id : ids_to_marg)
+            map_server->erase(id);
+    }
+    
+    void SwMargUpdate::removeStereoMSCKFinMargPose(std::shared_ptr<State> state,
+                                                 std::shared_ptr<MapServer> map_server)
+    {
+        const double marg_time = state->nextMargTime();
+        
+        if (marg_time == INFINITY) return;
+        
+        std::vector<int> ids_to_marg;
+        
+        for (const auto& item : *map_server)
+            if (item.second->_stereo_obs.find(marg_time) != item.second->_stereo_obs.end() && 
+                item.second->_ftype == FeatureInfo::FeatureType::MSCKF)
+                ids_to_marg.push_back(item.first);
+            
+            for (const int& id : ids_to_marg)
+                map_server->erase(id);
+    }
 }

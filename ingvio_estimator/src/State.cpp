@@ -8,7 +8,7 @@ namespace ingvio
         _max_sw_poses = filter_params._max_sw_clones;
         _max_landmarks = filter_params._max_lm_feats;
         
-        _T_cl2cr = filter_params._T_cl2i*filter_params._T_cr2i.inverse();
+        _T_cl2cr = filter_params._T_cr2i.inverse()*filter_params._T_cl2i;
         _T_cl2i = filter_params._T_cl2i;
         
         _enable_gnss = static_cast<bool>(filter_params._enable_gnss);

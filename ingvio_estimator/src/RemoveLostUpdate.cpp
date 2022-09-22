@@ -56,6 +56,8 @@ namespace ingvio
         res_large.setZero();
         H_large.setZero();
         
+        int valid_id_cnt = 0;
+        
         row_cnt = 0;
         for (int i = 0; i < update_ids.size(); ++i)
         {
@@ -74,7 +76,11 @@ namespace ingvio
             res_large.block(row_cnt, 0, res_block.rows(), 1) = res_block;
             
             row_cnt += res_block.rows();
+            ++valid_id_cnt;
         }
+        
+        if (valid_id_cnt > 0)
+            std::cout << "[RemoveLostUpdate]: Features used in remove update = " << valid_id_cnt << std::endl;
         
         if (row_cnt < H_large.rows())
         {
@@ -108,7 +114,8 @@ namespace ingvio
             res_thin = res_large;
         }
         
-        StateManager::ekfUpdate(state, sw_var_type, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
+        if (res_thin.rows() > 0)
+            StateManager::ekfUpdate(state, sw_var_type, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
         
         for (const auto& item : update_ids)
             map_server->erase(item);
@@ -125,7 +132,7 @@ namespace ingvio
         const int num_of_cols = 6*sw_var_order.size();
         const int num_of_rows = 2*feature_info->numOfMonoFrames();
         
-        Eigen::MatrixXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
+        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
         Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, num_of_cols);
         Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, 3);
         
@@ -318,7 +325,7 @@ namespace ingvio
         const int num_of_cols = 6*sw_var_order.size();
         const int num_of_rows = 4*feature_info->numOfStereoFrames();
         
-        Eigen::MatrixXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
+        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
         Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, num_of_cols);
         Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, 3);
         

@@ -77,7 +77,7 @@ namespace ingvio
             const Eigen::VectorXd& res,
             double noise_iso_meas);
         
-        static void addVariableDelayed(
+        static bool addVariableDelayed(
             std::shared_ptr<State> state,
             std::shared_ptr<Type> var_new,
             const std::vector<std::shared_ptr<Type>>& var_old_order,

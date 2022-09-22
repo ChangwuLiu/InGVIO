@@ -15,6 +15,9 @@
 
 #include "RemoveLostUpdate.h"
 #include "SwMargUpdate.h"
+#include "LandmarkUpdate.h"
+
+#include "TicToc.h"
 
 namespace ingvio
 {
@@ -56,6 +59,8 @@ namespace ingvio
         
         _sw_marg_update = std::make_shared<SwMargUpdate>(_filter_params);
         
+        _landmark_update = std::make_shared<LandmarkUpdate>(_filter_params);
+        
         _filter_params.printParams();
     }
     
@@ -72,26 +77,43 @@ namespace ingvio
         const double target_time = mono_frame_ptr->header.stamp.toSec();
         
         if (_state->_timestamp >= target_time) return;
+    
+        TicToc timer_mono;
         
         _imu_propa->propagateAugmentAtEnd(_state, target_time);
+        
+        if (_state->_timestamp < target_time) return;
         
         MapServerManager::collectMonoMeas(_map_server, _state, mono_frame_ptr);
         
         _remove_lost_update->updateStateMono(_state, _map_server, _tri);
         
-        _sw_marg_update->updateStateMono(_state, _map_server, _tri);
+        // _sw_marg_update->updateStateMono(_state, _map_server, _tri);
         
+        _landmark_update->updateLandmarkMono(_state, _map_server);
+        
+        _landmark_update->initNewLandmarkMono(_state, _map_server, _tri);
+        /*
         _sw_marg_update->cleanMonoObsAtMargTime(_state, _map_server);
         
         _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
+        */
+        _landmark_update->changeLandmarkAnchor(_state, _map_server);
+        
+        _sw_marg_update->removeMonoMSCKFinMargPose(_state, _map_server);
         
         _sw_marg_update->margSwPose(_state);
         
+        // std::cout << "[IngvioFilter]: Marg sw update time = " << timer_marg_sw.toc() << " (ms) " << std::endl;
+        
+        
+        MapServerManager::mapStatistics(_map_server);
+        MapServerManager::checkMapStateConsistent(_map_server, _state);
+        
+        
         visualize(mono_frame_ptr->header);
         
-        std::cout << "[IngvioFilter]: sw size = " << _state->_sw_camleft_poses.size() << std::endl;
-        
-        std::cout << "[IngvioFilter]: map server size = " << _map_server->size() << std::endl;
+        std::cout << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << std::endl;
     }
     
     void IngvioFilter::callbackStereoFrame(const feature_tracker::StereoFrameConstPtr& stereo_frame_ptr)
@@ -108,11 +130,20 @@ namespace ingvio
         
         if (_state->_timestamp >= target_time) return;
         
+        TicToc timer_stereo;
+        
         _imu_propa->propagateAugmentAtEnd(_state, target_time);
+        
+        if (_state->_timestamp < target_time) return;
         
         MapServerManager::collectStereoMeas(_map_server, _state, stereo_frame_ptr);
         
         _remove_lost_update->updateStateStereo(_state, _map_server, _tri);
+        
+        /*
+        std::cout << " ===========================================" << std::endl;
+        std::cout << "[IngvioFilter]: Remove lost update time = " << timer_remove.toc() << " (ms) " << std::endl;
+        */
         
         _sw_marg_update->updateStateStereo(_state, _map_server, _tri);
         
@@ -120,9 +151,15 @@ namespace ingvio
         
         _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
         
+        // _sw_marg_update->removeStereoMSCKFinMargPose(_state, _map_server);
+        
         _sw_marg_update->margSwPose(_state);
         
+        // std::cout << "[IngvioFilter]: Marg sw update time = " << timer_marg_sw.toc() << " (ms) " << std::endl;
+        
         visualize(stereo_frame_ptr->header);
+        
+        std::cout << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << std::endl;
     }
     
     void IngvioFilter::callbackIMU(sensor_msgs::Imu::ConstPtr imu_msg)

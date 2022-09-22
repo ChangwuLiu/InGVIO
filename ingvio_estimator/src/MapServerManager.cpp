@@ -262,12 +262,23 @@ namespace ingvio
         
         if (flag && !pf.hasNaN())
         {
+            ++feature_info->_numOfTri;
+            
+            Eigen::Vector3d body_anchor = feature_info->_landmark->getAnchoredPose()->copyValueAsIso().inverse()*pf;
+            
+            if (body_anchor.z() <= 0) return false;
+            
             if (!feature_info->_isTri)
+            {
                 feature_info->_landmark->setFejPosXyz(pf);
-            
+                feature_info->_landmark->setValuePosXyz(pf);
+                feature_info->_isTri = true;
+                
+                return true;
+            }
+                
             feature_info->_landmark->setValuePosXyz(pf);
-            feature_info->_isTri = true;
-            
+                
             return true;
         }
         else
@@ -285,11 +296,22 @@ namespace ingvio
         
         if (flag && !pf.hasNaN())
         {
+            ++feature_info->_numOfTri;
+            
+            Eigen::Vector3d body_anchor = feature_info->_landmark->getAnchoredPose()->copyValueAsIso().inverse()*pf;
+            
+            if (body_anchor.z() <= 0) return false;
+            
             if (!feature_info->_isTri)
+            {
                 feature_info->_landmark->setFejPosXyz(pf);
+                feature_info->_landmark->setValuePosXyz(pf);
+                feature_info->_isTri = true;
+                
+                return true;
+            }
             
             feature_info->_landmark->setValuePosXyz(pf);
-            feature_info->_isTri = true;
             
             return true;
         }
@@ -343,5 +365,55 @@ namespace ingvio
         FeatureInfoManager::changeAnchoredPose(feature_info, state, state->_sw_camleft_poses.rbegin()->first);
     }
     
+    void MapServerManager::mapStatistics(const std::shared_ptr<MapServer> map_server)
+    {
+        int num_of_msckf = 0;
+        int num_of_slam = 0;
+        int num_of_err = 0;
+        
+        for (const auto& item : *map_server)
+        {
+            if (item.second->_ftype ==  FeatureInfo::FeatureType::SLAM)
+                ++num_of_slam;
+            else if (item.second->_ftype == FeatureInfo::FeatureType::MSCKF)
+                ++num_of_msckf;
+            
+            if (item.second->_mono_obs.size() == 0 && item.second->_stereo_obs.size() == 0)
+                ++num_of_err;
+        }
+        
+        std::cout << "[MapServerManager]: Num of msckf feats = " << num_of_msckf << " Num of slam feats = " << num_of_slam << std::endl;
+        
+        if (num_of_err > 0)
+            std::cout << "[MapServerManager]: Warning!! " << num_of_err << " feats in map server is null without obs!" << std::endl;
+    }
+    
+    void MapServerManager::checkMapStateConsistent(const std::shared_ptr<MapServer> map_server,
+                                                   const std::shared_ptr<State> state)
+    {
+        std::vector<int> ids_slam;
+        
+        for (const auto& item : *map_server)
+            if (item.second->_ftype == FeatureInfo::FeatureType::SLAM)
+            {
+                const int& id = item.first;
+                
+                ids_slam.push_back(id);
+                
+                if (state->_anchored_landmarks.find(id) == state->_anchored_landmarks.end())
+                    std::cout << "[MapServerManager]: Map server slam feat id = " << id << " not in the state! " << std::endl;
+                else
+                {
+                    if (state->_anchored_landmarks.at(id) != item.second->_landmark)
+                        std::cout << "[MapServerManager]: Map server slam feat id = " << id << " lm ptr not the same with that in state! " << std::endl;
+                    
+                    if (state->_anchored_landmarks.at(id)->getAnchoredPose() != item.second->_landmark->getAnchoredPose())
+                        std::cout << "[MapServerManager]: Map server slam feat id = " << id << " anchor pose not the same with that of in state! " << std::endl;
+                }
+            }
+        
+        if (ids_slam.size() != state->_anchored_landmarks.size())
+            std::cout << "[MapServerManager]: Some state lm are no longer in map server!" << std::endl;
+    }
 }
 

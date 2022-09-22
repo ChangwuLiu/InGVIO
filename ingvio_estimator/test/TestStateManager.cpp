@@ -35,7 +35,9 @@ namespace ingvio_test
         IngvioParams filter_params;
         
         filter_params.readParams("/home/lcw/VIO/ws_ingvio/src/config/sportsfield/ingvio_stereo.yaml");
+        filter_params._enable_gnss = 1;
         filter_params.printParams();
+        
         
         std::shared_ptr<State> state = std::make_shared<State>(filter_params);
         

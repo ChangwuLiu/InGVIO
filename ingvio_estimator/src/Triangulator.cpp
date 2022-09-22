@@ -1,3 +1,5 @@
+#include <Eigen/QR>
+
 #include "Triangulator.h"
 
 #include "MapServer.h"
@@ -147,7 +149,11 @@ namespace ingvio
         
         this->filterCommonTimestamp<MonoMeas>(sw_poses_raw, mono_obs, sw_poses, mobs);
         
-        if (mobs.size() <= 2) return false;
+        if (mobs.size() <= 3)
+        {
+            pf.setZero();
+            return false;
+        }
         
         double max_trans;
         double max_timestamp = findLongestTrans(sw_poses, max_trans);
@@ -241,7 +247,8 @@ namespace ingvio
         
         pf.setZero();
         
-        if (delta_norm > _conv_precision) return false;
+        if ((outer_loop_cnt >= _outer_loop_max_iter && inner_loop_cnt >= _inner_loop_max_iter) || delta_norm > _conv_precision) 
+            return false;
         
         for (const auto& item : rel_sw_poses)
         {
@@ -249,6 +256,24 @@ namespace ingvio
             if (tmp.z() <= 0.0)
                 return false;
         }
+        
+        Eigen::HouseholderQR<Eigen::MatrixXd> qr(pf0);
+        Eigen::MatrixXd Q = qr.householderQ();
+        
+        double base_line_max = 0.0;
+        
+        for (const auto& item : rel_sw_poses)
+        {
+            Eigen::Vector3d p_ci_A = item.second->copyValueAsIso().inverse().translation();
+            
+            double base_line = ((Q.block(0, 1, 3, 2)).transpose()*p_ci_A).norm();
+            
+            if (base_line > base_line_max)
+                base_line_max = base_line;
+        }
+        
+        if (pf0.z() < _min_depth || pf0.z() > _max_depth)
+            return false;
         
         pf = pose0->copyValueAsIso()*pf0;
         
@@ -271,7 +296,7 @@ namespace ingvio
         std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_poses;
         
         this->filterCommonTimestamp<StereoMeas>(sw_poses_raw, stereo_obs, sw_poses, sobs);
-            
+        
         std::map<double, std::shared_ptr<MonoMeas>> mono_obs;
         std::map<double, std::shared_ptr<SE3>, std::less<double>> sw_mono_poses;
         

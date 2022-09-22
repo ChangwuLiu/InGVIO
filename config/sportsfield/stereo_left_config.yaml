@@ -39,8 +39,8 @@ extrinsicTranslation: !!opencv-matrix     # t^{imu}_{cam}
    data: [-0.0759472920952561, -0.0039320527565750, -0.0016395029500217]
 
 # tracker config
-max_cnt: 50            # max feature number in feature tracking
-min_dist: 45              # min distance between two features 
+max_cnt: 90            # max feature number in feature tracking
+min_dist: 30              # min distance between two features 
 freq: 0                         # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be the same as raw image 
 show_track: 1          # publish tracking image as topic
 equalize: 1                # if image is too dark or light, turn on equalize to find enough features

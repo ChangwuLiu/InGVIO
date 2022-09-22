@@ -61,10 +61,14 @@ namespace ingvio
         _init_damping = fs["init_damping"];
         _outer_loop_max_iter = fs["outer_loop_max_iter"];
         _inner_loop_max_iter = fs["inner_loop_max_iter"];
+        _max_depth = fs["max_depth"];
+        _min_depth = fs["min_depth"];
+        _max_baseline_ratio = fs["max_baseline_ratio"];
         
         _chi2_max_dof = fs["chi2_max_dof"];
         _chi2_thres = fs["chi2_thres"];
         _visual_noise = fs["visual_noise"];
+        _frame_select_interval = fs["frame_select_interval"];
         
         if (_enable_gnss)
         {
@@ -189,12 +193,20 @@ namespace ingvio
         std::cout << "outer_loop_max_iter: " << _outer_loop_max_iter << std::endl;
         
         std::cout << "inner_loop_max_iter: " << _inner_loop_max_iter << std::endl;
+        
+        std::cout << "max depth: " << _max_depth << std::endl;
+        
+        std::cout << "min_depth: " << _min_depth << std::endl;
+        
+        std::cout << "max_baseline_ratio: " << _max_baseline_ratio << std::endl;
 
         std::cout << "chi2_max_dof: " << _chi2_max_dof << std::endl;
          
         std::cout << "chi2_thres: " << _chi2_thres << std::endl;
         
         std::cout << "visual_noise: " << _visual_noise << std::endl;
+        
+        std::cout << "frame_select_interval: " <<  _frame_select_interval << std::endl;
         
         if (_enable_gnss)
         {
