@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <cmath>
 
@@ -414,6 +415,58 @@ namespace ingvio
         
         if (ids_slam.size() != state->_anchored_landmarks.size())
             std::cout << "[MapServerManager]: Some state lm are no longer in map server!" << std::endl;
+    }
+    
+    void MapServerManager::checkAnchorStatus(const std::shared_ptr<MapServer> map_server,
+                                             const std::shared_ptr<State> state)
+    {
+        std::unordered_map<std::shared_ptr<SE3>, double> sw_poses;
+        for (const auto& item : state->_sw_camleft_poses)
+            sw_poses.insert(std::make_pair(item.second, item.first));
+        
+        for (const auto& item : *map_server)
+            if (sw_poses.find(item.second->_landmark->getAnchoredPose()) == sw_poses.end())
+            {
+                std::cout << "[MapServerManager]: Anchor of Feat id = " << item.first << " not in the sw! " << std::endl;
+            }
+    }
+    
+    void MapServerManager::eraseInvalidFeatures(std::shared_ptr<MapServer> map_server,
+                                                std::shared_ptr<State> state)
+    {
+        std::vector<int> ids_to_remove;
+        
+        for (const auto& item : *map_server)
+        {
+            const int& id = item.first;
+            const auto& feat_info_ptr = item.second;
+            
+            if (!feat_info_ptr->_isTri) continue;
+            
+            if (feat_info_ptr->_landmark->getAnchoredPose() == nullptr)
+            {
+                ids_to_remove.push_back(id);
+                continue;
+            }
+            
+            const auto anchor_ptr = feat_info_ptr->_landmark->getAnchoredPose();
+            
+            Eigen::Vector3d body = anchor_ptr->copyValueAsIso().inverse()*feat_info_ptr->_landmark->valuePosXyz();
+            
+            if (body.z() <= 0.2) 
+                ids_to_remove.push_back(id);
+        }
+        
+        if (ids_to_remove.size() > 0)
+            std::cout << "[MapServerManager]: Num of feats have negative depth in anchor pose = " << ids_to_remove.size() << std::endl;
+        
+        for (const int& id : ids_to_remove)
+        {
+            if (map_server->at(id)->_ftype == FeatureInfo::FeatureType::SLAM)
+                StateManager::margAnchoredLandmarkInState(state, id);
+            
+            map_server->erase(id);
+        }
     }
 }
 

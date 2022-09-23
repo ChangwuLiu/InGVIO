@@ -57,18 +57,20 @@ namespace ingvio
         int _frame_select_interval;
         
         void generateSwVarOrder(const std::shared_ptr<State> state,
+                                const std::vector<double>& selected_timestamps,
                                 std::vector<std::shared_ptr<SE3>>& sw_var_order,
                                 std::map<std::shared_ptr<SE3>, int>& sw_index,
                                 std::vector<std::shared_ptr<Type>>& sw_var_type);
         
-        void calcResJacobianSingleFeatSelectedMonoObs(
+        std::shared_ptr<SE3> calcResJacobianSingleFeatSelectedMonoObs(
             const std::shared_ptr<FeatureInfo> feature_info,
             const std::map<double, std::shared_ptr<SE3>>& sw_poses,
             const std::vector<std::shared_ptr<SE3>>& sw_var_order,
             const std::map<std::shared_ptr<SE3>, int>& sw_index_map,
             const std::vector<double>& selected_timestamps,
             Eigen::VectorXd& res_block,
-            Eigen::MatrixXd& H_block);
+            Eigen::MatrixXd& H_block,
+            Eigen::MatrixXd& H_anchor_block);
         
         void calcResJacobianSingleFeatSelectedStereoObs(
             const std::shared_ptr<FeatureInfo> feature_info, 

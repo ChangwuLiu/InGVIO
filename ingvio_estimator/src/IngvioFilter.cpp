@@ -88,27 +88,31 @@ namespace ingvio
         
         _remove_lost_update->updateStateMono(_state, _map_server, _tri);
         
-        // _sw_marg_update->updateStateMono(_state, _map_server, _tri);
+        _sw_marg_update->updateStateMono(_state, _map_server, _tri);
         
         _landmark_update->updateLandmarkMono(_state, _map_server);
         
         _landmark_update->initNewLandmarkMono(_state, _map_server, _tri);
-        /*
+        
         _sw_marg_update->cleanMonoObsAtMargTime(_state, _map_server);
         
         _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
-        */
+        
         _landmark_update->changeLandmarkAnchor(_state, _map_server);
         
-        _sw_marg_update->removeMonoMSCKFinMargPose(_state, _map_server);
+        // _sw_marg_update->removeMonoMSCKFinMargPose(_state, _map_server);
         
         _sw_marg_update->margSwPose(_state);
         
+        MapServerManager::eraseInvalidFeatures(_map_server, _state);
+        
         // std::cout << "[IngvioFilter]: Marg sw update time = " << timer_marg_sw.toc() << " (ms) " << std::endl;
         
-        
+        /*
         MapServerManager::mapStatistics(_map_server);
         MapServerManager::checkMapStateConsistent(_map_server, _state);
+        */
+        MapServerManager::checkAnchorStatus(_map_server, _state);
         
         
         visualize(mono_frame_ptr->header);

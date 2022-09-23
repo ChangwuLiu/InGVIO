@@ -109,5 +109,11 @@ namespace ingvio
         
         static void checkMapStateConsistent(const std::shared_ptr<MapServer> map_server,
                                             const std::shared_ptr<State> state);
+        
+        static void checkAnchorStatus(const std::shared_ptr<MapServer> map_server,
+                                      const std::shared_ptr<State> state);
+        
+        static void eraseInvalidFeatures(std::shared_ptr<MapServer> map_server,
+                                         std::shared_ptr<State> state);
     };
 }
