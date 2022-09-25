@@ -1,15 +1,14 @@
 %YAML:1.0
-# config for sportsfield
+# config for fw_zed2i_f9p
 
 imu_topic: "/imu0"
-feature_topic: "/stereo_tracker/stereo_feature"
+feature_topic: "/mono_tracker/mono_feature"
 
-cam_nums: 2
-cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_left_config.yaml"
-cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_right_config.yaml"
+cam_nums: 1
+cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/fw_zed2i_f9p/mono_config.yaml"
 
 max_sliding_window_poses: 21
-max_landmark_features: 0
+max_landmark_features: 25
 
 enable_gnss: 0
 
@@ -22,9 +21,9 @@ noise_rcv_clockbias_randomwalk: 0.2
 
 init_cov_rot: 0.05
 init_cov_pos: 0.1
-init_cov_vel: 0.5
+init_cov_vel: 0.25
 init_cov_bg: 0.01
-init_cov_ba: 0.08
+init_cov_ba: 0.01
 init_cov_ext_rot: 8e-03
 init_cov_ext_pos: 5e-04
 init_cov_rcv_clockbias: 3.0
@@ -32,8 +31,8 @@ init_cov_rcv_clockbias_randomwalk: 1.0
 init_cov_yof: 0.03
 
 gravity_norm: 9.8
-max_imu_buffer_size: 1000
-init_imu_buffer_sp: 100
+max_imu_buffer_size: 10000
+init_imu_buffer_sp: 10
 
 trans_thres: 0.25
 huber_epsilon: 0.01
@@ -41,11 +40,11 @@ conv_precision: 5e-07
 init_damping: 1e-03
 outer_loop_max_iter: 10
 inner_loop_max_iter: 10
-max_depth: 60.0
+max_depth: 100.0
 min_depth: 0.2
 max_baseline_ratio: 80.0
 
 chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
-frame_select_interval: 10
+frame_select_interval: 12

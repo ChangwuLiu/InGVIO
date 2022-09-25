@@ -72,7 +72,7 @@ namespace ingvio
             Eigen::MatrixXd& H_block,
             Eigen::MatrixXd& H_anchor_block);
         
-        void calcResJacobianSingleFeatSelectedStereoObs(
+        std::shared_ptr<SE3> calcResJacobianSingleFeatSelectedStereoObs(
             const std::shared_ptr<FeatureInfo> feature_info, 
             const std::map<double, std::shared_ptr<SE3>>& sw_poses,
             const std::vector<std::shared_ptr<SE3>>& sw_var_order,
@@ -80,7 +80,8 @@ namespace ingvio
             const std::vector<double>& selected_timestamps,
             const Eigen::Isometry3d& T_cl2cr,
             Eigen::VectorXd& res_block,
-            Eigen::MatrixXd& H_block);
+            Eigen::MatrixXd& H_block,
+            Eigen::MatrixXd& H_anchor_block);
         
         void selectSwTimestamps(const std::map<double, std::shared_ptr<SE3>>& sw_poses,
                                 const double& marg_time,

@@ -7,8 +7,8 @@ feature_topic: "/mono_tracker/mono_feature"
 cam_nums: 1
 cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/mono_config.yaml"
 
-max_sliding_window_poses: 21
-max_landmark_features: 10
+max_sliding_window_poses: 19
+max_landmark_features: 25
 
 enable_gnss: 0
 
@@ -40,11 +40,11 @@ conv_precision: 5e-07
 init_damping: 1e-03
 outer_loop_max_iter: 10
 inner_loop_max_iter: 10
-max_depth: 60.0
+max_depth: 40.0
 min_depth: 0.2
 max_baseline_ratio: 80.0
 
 chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
-frame_select_interval: 10
+frame_select_interval: 11

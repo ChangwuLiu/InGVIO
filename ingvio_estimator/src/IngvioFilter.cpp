@@ -100,20 +100,9 @@ namespace ingvio
         
         _landmark_update->changeLandmarkAnchor(_state, _map_server);
         
-        // _sw_marg_update->removeMonoMSCKFinMargPose(_state, _map_server);
-        
         _sw_marg_update->margSwPose(_state);
         
         MapServerManager::eraseInvalidFeatures(_map_server, _state);
-        
-        // std::cout << "[IngvioFilter]: Marg sw update time = " << timer_marg_sw.toc() << " (ms) " << std::endl;
-        
-        /*
-        MapServerManager::mapStatistics(_map_server);
-        MapServerManager::checkMapStateConsistent(_map_server, _state);
-        */
-        MapServerManager::checkAnchorStatus(_map_server, _state);
-        
         
         visualize(mono_frame_ptr->header);
         
@@ -144,22 +133,15 @@ namespace ingvio
         
         _remove_lost_update->updateStateStereo(_state, _map_server, _tri);
         
-        /*
-        std::cout << " ===========================================" << std::endl;
-        std::cout << "[IngvioFilter]: Remove lost update time = " << timer_remove.toc() << " (ms) " << std::endl;
-        */
-        
         _sw_marg_update->updateStateStereo(_state, _map_server, _tri);
         
         _sw_marg_update->cleanStereoObsAtMargTime(_state, _map_server);
         
         _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
         
-        // _sw_marg_update->removeStereoMSCKFinMargPose(_state, _map_server);
-        
         _sw_marg_update->margSwPose(_state);
         
-        // std::cout << "[IngvioFilter]: Marg sw update time = " << timer_marg_sw.toc() << " (ms) " << std::endl;
+        MapServerManager::eraseInvalidFeatures(_map_server, _state);
         
         visualize(stereo_frame_ptr->header);
         

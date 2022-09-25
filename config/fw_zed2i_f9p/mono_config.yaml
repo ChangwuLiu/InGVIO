@@ -1,0 +1,47 @@
+%YAML:1.0
+# config for fw_zed2i_f9p
+
+# common parameters
+imu_topic: "/imu0"
+image_topic: "/cam0/image_raw"
+
+# intrinsic
+model_type: PINHOLE
+camera_name: cam0
+image_width: 1280
+image_height: 720
+distortion_parameters:
+   k1: -0.013323572637177162
+   k2: 0.012297484726727028
+   p1: -0.0008173313551158254
+   p2: -0.0036129297585792528
+projection_parameters:
+   fx: 528.0821562999166
+   fy: 528.1818555071027
+   cx: 646.6309796410819
+   cy: 351.87255392593374
+   
+# extrinsic
+extrinsicRotation: !!opencv-matrix        # R^{imu}_{cam}
+   rows: 3
+   cols: 3
+   dt: d
+   data: [0.01301095634388352, -0.005070623738001712, 0.9999024971415602, 
+          -0.9999097972900367, 0.003267771869320563, 0.01302762259241452, 
+         -0.003333511424589375, -0.9999818050554322, -0.005027649516865795]
+extrinsicTranslation: !!opencv-matrix     # t^{imu}_{cam}
+   rows: 3
+   cols: 1
+   dt: d
+   data: [0.03671615355111148, 0.02169026717979497, -0.0000578135929000942]
+   
+
+# feature tracker parameters
+max_cnt: 150        # max feature number in feature tracking
+min_dist: 45        # min distance between two features 
+freq: 0             # freq (Hz) of publishing tracking result. At least 10Hz for good
+                    # estimation. If set 0, the frequence will be the same as raw image 
+F_threshold: 1.0    # ransac threshold (pixel)
+show_track: 1       # publish tracking image as topic
+equalize: 1         # if image is too dark or light, 
+                    # turn on equalize to find enough features

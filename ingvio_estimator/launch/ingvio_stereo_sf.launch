@@ -12,5 +12,5 @@
         <param name="config_file" type="string" value="$(arg ingvio_config_path)" />
     </node>
 
-    <node name="visualizer" pkg="rviz" type="rviz" output="screen" args="-d $(find ingvio_estimator)/rviz/stereo_sf.rviz" />
+    <node name="visualizer" pkg="rviz" type="rviz" output="screen" args="-d $(find ingvio_estimator)/rviz/ingvio_stereo.rviz" />
 </launch>
