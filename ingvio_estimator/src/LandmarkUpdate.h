@@ -37,6 +37,13 @@ namespace ingvio
         void changeLandmarkAnchor(std::shared_ptr<State> state, 
                                   std::shared_ptr<MapServer> map_server);
         
+        void updateLandmarkStereo(std::shared_ptr<State> state,
+                                std::shared_ptr<MapServer> map_server);
+        
+        void initNewLandmarkStereo(std::shared_ptr<State> state,
+                                   std::shared_ptr<MapServer> map_server,
+                                   std::shared_ptr<Triangulator> tri);
+        
     protected:
         
         double _noise;
@@ -62,5 +69,23 @@ namespace ingvio
                                 std::vector<std::shared_ptr<SE3>>& sw_var_order,
                                 std::map<std::shared_ptr<SE3>, int>& sw_index,
                                 std::vector<std::shared_ptr<Type>>& sw_var_type);
+        
+        void calcResJacobianSingleLandmarkStereo(const std::shared_ptr<FeatureInfo> feature_info,
+                                                 const std::shared_ptr<State> state,
+                                                 Eigen::Vector4d& res,
+                                                 Eigen::Matrix<double, 4, 9>& H_fj_epose,
+                                                 Eigen::Matrix<double, 4, 6>& H_fj_ext,
+                                                 Eigen::Matrix<double, 4, 6>& H_fj_anch,
+                                                 Eigen::Matrix<double, 4, 3>& H_fj_pf);
+        
+        void calcResJacobianSingleFeatAllStereoObs(
+            const std::shared_ptr<FeatureInfo> feature_info,
+            const std::map<double, std::shared_ptr<SE3>>& sw_poses,
+            const std::vector<std::shared_ptr<SE3>>& sw_var_order,
+            const std::map<std::shared_ptr<SE3>, int>& sw_index_map,
+            const Eigen::Isometry3d& T_cl2cr,
+            Eigen::VectorXd& res_block,
+            Eigen::MatrixXd& Hx_block,
+            Eigen::MatrixXd& Hf_block);
     };
 }

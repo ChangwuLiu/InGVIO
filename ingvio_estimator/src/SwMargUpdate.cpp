@@ -197,7 +197,7 @@ namespace ingvio
         double marg_time = state->nextMargTime();
         
         if (marg_time == INFINITY) return;
-        
+                
         std::vector<double> selected_timestamps;
         this->selectSwTimestamps(state->_sw_camleft_poses, marg_time, selected_timestamps);
         

@@ -1,5 +1,7 @@
 #include "stereo_tracker.h"
 
+#include "Color.h"
+
 namespace feature_tracker
 {
     unsigned long long int StereoTracker::n_id = 0;
@@ -39,6 +41,7 @@ namespace feature_tracker
     
     void StereoTracker::stereo_callback(const sensor_msgs::Image::ConstPtr& cam_left_msg, const sensor_msgs::Image::ConstPtr& cam_right_msg)
     {
+        TicToc stereo_timer;
         
         if (first_image_flag)
         {
@@ -156,6 +159,15 @@ namespace feature_tracker
             }
         }
         
+        if (param.show_timer)
+        {
+            double stereo_time = stereo_timer.toc();
+            
+            if (stereo_time <= param.timer_warning_thres)
+                std::cout << color::setBlue << "[StereoTracker]: Stereo tracking processing time = " << stereo_time << " (ms) " << color::resetColor << std::endl;
+            else
+                std::cout << color::setRed << "[StereoTracker]: Stereo tracking processing time = " << stereo_time << " (ms) " << color::resetColor << std::endl;
+        }
     }
     
     void StereoTracker::processStereoImage(const cv::Mat& _left_img, const cv::Mat& _right_img, double _cur_time)

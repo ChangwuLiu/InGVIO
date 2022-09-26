@@ -18,6 +18,7 @@
 #include "LandmarkUpdate.h"
 
 #include "TicToc.h"
+#include "Color.h"
 
 namespace ingvio
 {
@@ -106,7 +107,12 @@ namespace ingvio
         
         visualize(mono_frame_ptr->header);
         
-        std::cout << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << std::endl;
+        double time_mono = timer_mono.toc();
+        
+        if (time_mono < 50.0)
+            std::cout << color::setGreen << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << color::resetColor << std::endl;
+        else
+            std::cout << color::setRed << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << color::resetColor << std::endl;
     }
     
     void IngvioFilter::callbackStereoFrame(const feature_tracker::StereoFrameConstPtr& stereo_frame_ptr)
@@ -135,9 +141,15 @@ namespace ingvio
         
         _sw_marg_update->updateStateStereo(_state, _map_server, _tri);
         
+        _landmark_update->updateLandmarkStereo(_state, _map_server);
+        
+        _landmark_update->initNewLandmarkStereo(_state, _map_server, _tri);
+        
         _sw_marg_update->cleanStereoObsAtMargTime(_state, _map_server);
         
         _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
+        
+        _landmark_update->changeLandmarkAnchor(_state, _map_server);
         
         _sw_marg_update->margSwPose(_state);
         
@@ -145,7 +157,13 @@ namespace ingvio
         
         visualize(stereo_frame_ptr->header);
         
-        std::cout << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << std::endl;
+        double time_stereo = timer_stereo.toc();
+        
+        if (time_stereo < 50.0)
+            std::cout << color::setGreen << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << color::resetColor << std::endl;
+        else
+            std::cout << color::setRed << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << color::resetColor << std::endl;
+        
     }
     
     void IngvioFilter::callbackIMU(sensor_msgs::Imu::ConstPtr imu_msg)

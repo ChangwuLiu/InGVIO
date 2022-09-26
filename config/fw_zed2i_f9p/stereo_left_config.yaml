@@ -41,6 +41,8 @@ max_cnt: 150            # max feature number in feature tracking
 min_dist: 45              # min distance between two features 
 freq: 0                         # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be the same as raw image 
 show_track: 1          # publish tracking image as topic
+show_timer: 0       # show time counting
+timer_warning_thres: 50.0 # in (ms)
 equalize: 1                # if image is too dark or light, turn on equalize to find enough features
 window_size: 20
 epipolar_thres: 15.0

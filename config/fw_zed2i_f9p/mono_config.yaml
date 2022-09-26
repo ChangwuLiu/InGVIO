@@ -43,5 +43,7 @@ freq: 0             # freq (Hz) of publishing tracking result. At least 10Hz for
                     # estimation. If set 0, the frequence will be the same as raw image 
 F_threshold: 1.0    # ransac threshold (pixel)
 show_track: 1       # publish tracking image as topic
+show_timer: 0       # show time counting
+timer_warning_thres: 50.0 # in (ms)
 equalize: 1         # if image is too dark or light, 
                     # turn on equalize to find enough features

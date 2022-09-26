@@ -28,7 +28,7 @@ namespace ingvio
         for (auto& item : *map_server)
             if (item.second->_ftype == FeatureInfo::FeatureType::MSCKF && item.second->_isToMarg)
             {
-                if (FeatureInfoManager::triangulateFeatureInfoMono(item.second, tri, state))
+                if (FeatureInfoManager::triangulateFeatureInfoMono(item.second, tri, state) && item.second->_mono_obs.size() >= 4)
                     update_ids.push_back(item.first);
                 else
                     direct_marg_ids.push_back(item.first);
@@ -39,52 +39,74 @@ namespace ingvio
         
         if (update_ids.size() == 0) return;
         
-        std::vector<std::shared_ptr<SE3>> sw_var_order;
-        std::map<std::shared_ptr<SE3>, int> sw_index_map;
-        std::vector<std::shared_ptr<Type>> sw_var_type;
+        std::map<std::shared_ptr<Type>, int> sw_index_map;
+        std::vector<std::shared_ptr<Type>> sw_var_order;
         
-        this->generateSwVarOrder(state, sw_var_order, sw_index_map, sw_var_type);
-        
-        const int num_of_cols = 6*sw_var_order.size();
+        const int max_possible_cols = 6*state->_sw_camleft_poses.size();
         
         int row_cnt = 0;
         for (int i = 0; i < update_ids.size(); ++i)
             row_cnt += 2*map_server->at(update_ids[i])->numOfMonoFrames()-3;
-            
-        Eigen::VectorXd res_large(row_cnt);
-        Eigen::MatrixXd H_large(row_cnt, num_of_cols);
+        const int max_possible_rows = row_cnt;
+        
+        Eigen::VectorXd res_large(max_possible_rows);
+        Eigen::MatrixXd H_large(max_possible_rows, max_possible_cols);
         res_large.setZero();
         H_large.setZero();
         
         int valid_id_cnt = 0;
         
         row_cnt = 0;
+        int col_cnt = 0;
+        
         for (int i = 0; i < update_ids.size(); ++i)
         {
             Eigen::VectorXd res_block;
             Eigen::MatrixXd H_block;
             
+            std::map<std::shared_ptr<Type>, int> block_index_map;
+            std::vector<std::shared_ptr<Type>> block_var_order;
+            
             this->calcResJacobianSingleFeatAllMonoObs(map_server->at(update_ids[i]),
                                                       state->_sw_camleft_poses,
-                                                      sw_var_order, sw_index_map,
+                                                      block_var_order, block_index_map,
                                                       res_block, H_block);
             
-            if (!testChiSquared(state, res_block, H_block, sw_var_type, this->_noise))
+            if (!testChiSquared(state, res_block, H_block, block_var_order, this->_noise))
                 continue;
             
-            H_large.block(row_cnt, 0, H_block.rows(), num_of_cols) = H_block;
+            Eigen::MatrixXd H_large_row_block = Eigen::MatrixXd::Zero(res_block.rows(), max_possible_cols);
+            
+            for (const auto& item : block_index_map)
+            {
+                const std::shared_ptr<Type>& pose_ptr = item.first;
+                const int& sub_idx = item.second;
+                
+                if (sw_index_map.find(pose_ptr) == sw_index_map.end())
+                {
+                    sw_index_map[pose_ptr] = col_cnt;
+                    sw_var_order.push_back(pose_ptr);
+                    col_cnt += pose_ptr->size();
+                }
+                
+                H_large_row_block.block(0, sw_index_map.at(pose_ptr), H_block.rows(), pose_ptr->size()) = H_block.block(0, sub_idx, H_block.rows(), pose_ptr->size());
+            }
+            
+            H_large.block(row_cnt, 0, H_block.rows(), max_possible_cols) = H_large_row_block;
             res_large.block(row_cnt, 0, res_block.rows(), 1) = res_block;
             
             row_cnt += res_block.rows();
             ++valid_id_cnt;
+            
+            if (valid_id_cnt >= _max_valid_ids) break;
         }
         
         if (valid_id_cnt > 0)
             std::cout << "[RemoveLostUpdate]: Features used in remove update = " << valid_id_cnt << std::endl;
         
-        if (row_cnt < H_large.rows())
+        if (row_cnt < max_possible_rows || col_cnt < max_possible_cols)
         {
-            H_large.conservativeResize(row_cnt, num_of_cols);
+            H_large.conservativeResize(row_cnt, col_cnt);
             res_large.conservativeResize(row_cnt, 1);
         }
         
@@ -105,8 +127,8 @@ namespace ingvio
             (spqr_helper.matrixQ().transpose()*H_large).evalTo(H_temp);
             (spqr_helper.matrixQ().transpose()*res_large).evalTo(r_temp);
             
-            H_thin = H_temp.topRows(num_of_cols);
-            res_thin = r_temp.head(num_of_cols);                 
+            H_thin = H_temp.topRows(row_cnt);
+            res_thin = r_temp.head(row_cnt);                 
         }
         else
         {
@@ -115,7 +137,7 @@ namespace ingvio
         }
         
         if (res_thin.rows() > 0)
-            StateManager::ekfUpdate(state, sw_var_type, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
+            StateManager::ekfUpdate(state, sw_var_order, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
         
         for (const auto& item : update_ids)
             map_server->erase(item);
@@ -124,21 +146,29 @@ namespace ingvio
     void RemoveLostUpdate::calcResJacobianSingleFeatAllMonoObs(
         const std::shared_ptr<FeatureInfo> feature_info, 
         const std::map<double, std::shared_ptr<SE3>>& sw_poses,
-        const std::vector<std::shared_ptr<SE3>>& sw_var_order,
-        const std::map<std::shared_ptr<SE3>, int>& sw_index_map,
+        std::vector<std::shared_ptr<Type>>& block_var_order,
+        std::map<std::shared_ptr<Type>, int>& block_index_map,
         Eigen::VectorXd& res_block,
         Eigen::MatrixXd& H_block)
     {
-        const int num_of_cols = 6*sw_var_order.size();
-        const int num_of_rows = 2*feature_info->numOfMonoFrames();
+        const int max_possible_rows = 2*feature_info->numOfMonoFrames();
+        const int max_possible_cols = 6*sw_poses.size();
         
-        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(num_of_rows);
-        Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, num_of_cols);
-        Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(num_of_rows, 3);
+        Eigen::VectorXd res_block_tmp = Eigen::VectorXd::Zero(max_possible_rows);
+        Eigen::MatrixXd H_block_tmp = Eigen::MatrixXd::Zero(max_possible_rows, max_possible_cols);
+        Eigen::MatrixXd Hf_block_tmp = Eigen::MatrixXd::Zero(max_possible_rows, 3);
         
         const Eigen::Vector3d pf_w = feature_info->_landmark->valuePosXyz();
+        const std::shared_ptr<SE3> pose_anchor_ptr = feature_info->_landmark->getAnchoredPose();
+        
+        block_var_order.clear();
+        block_index_map.clear();
+        
+        block_index_map[pose_anchor_ptr] = 0;
+        block_var_order.push_back(pose_anchor_ptr);
         
         int row_cnt = 0;
+        int col_cnt = 6;
         
         for (const auto& item : feature_info->_mono_obs)
         {
@@ -149,7 +179,6 @@ namespace ingvio
             
             const std::shared_ptr<MonoMeas>& mono_obs_ptr = item.second;
             const std::shared_ptr<SE3>& pose_obs_ptr = sw_poses.at(time_of_obs);
-            const std::shared_ptr<SE3> pose_anchor_ptr = feature_info->_landmark->getAnchoredPose();
             
             const Eigen::Matrix3d R_cm2w = pose_obs_ptr->valueLinearAsMat();
             const Eigen::Vector3d p_cm = pose_obs_ptr->valueTrans();
@@ -162,17 +191,35 @@ namespace ingvio
             H_proj(1, 1) = 1.0/pf_cm.z();
             H_proj(1, 2) = -pf_cm.y()/std::pow(pf_cm.z(), 2);
             
-            Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
+            bool flag = false;
+            
+            if (block_index_map.find(pose_obs_ptr) == block_index_map.end())
+            {
+                flag = true;
+                block_index_map[pose_obs_ptr] = col_cnt;
+                block_var_order.push_back(pose_obs_ptr);
+                col_cnt += pose_obs_ptr->size();
+            }
+            
+            Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, max_possible_cols);
+            H_pf2x.block<3, 3>(0, block_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
+            H_pf2x.block<3, 3>(0, block_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, block_index_map.at(pose_obs_ptr));
+            H_pf2x.block<3, 3>(0, block_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
             
             Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
 
             if (H_proj.hasNaN() || H_pf2x.hasNaN()) 
+            {
+                if (flag)
+                {
+                    block_index_map.erase(pose_obs_ptr);
+                    block_var_order.pop_back();
+                    col_cnt -= pose_obs_ptr->size();
+                }
                 continue;
+            }
             
-            H_block_tmp.block(row_cnt, 0, 2, num_of_cols) = H_proj*H_pf2x;
+            H_block_tmp.block(row_cnt, 0, 2, max_possible_cols) = H_proj*H_pf2x;
             Hf_block_tmp.block(row_cnt, 0, 2, 3) = H_proj*H_pf2pf;
             
             res_block_tmp.block(row_cnt, 0, 2, 1) = mono_obs_ptr->asVec()-Eigen::Vector2d(pf_cm.x()/pf_cm.z(), pf_cm.y()/pf_cm.z());
@@ -180,12 +227,15 @@ namespace ingvio
             row_cnt += 2;
         }
         
-        if (row_cnt < res_block.rows())
+        if (row_cnt < max_possible_rows || col_cnt < max_possible_cols)
         {
             res_block_tmp.conservativeResize(row_cnt, 1);
-            H_block_tmp.conservativeResize(row_cnt, num_of_cols);
+            H_block_tmp.conservativeResize(row_cnt, col_cnt);
             Hf_block_tmp.conservativeResize(row_cnt, 3);
         }
+        
+        if (row_cnt <= 3)
+            std::cout << "[RemoveLostUpdate]: Warning in mono feats removal, row cnt <= 3! " << std::endl;
         
         Eigen::JacobiSVD<Eigen::MatrixXd> svd_helper(Hf_block_tmp, Eigen::ComputeFullU | Eigen::ComputeThinV);
         Eigen::MatrixXd V = svd_helper.matrixU().rightCols(row_cnt-3);
@@ -194,24 +244,6 @@ namespace ingvio
         res_block = V.transpose()*res_block_tmp;
     }
     
-    void RemoveLostUpdate::generateSwVarOrder(const std::shared_ptr<State> state,
-                                              std::vector<std::shared_ptr<SE3>>& sw_var_order,
-                                              std::map<std::shared_ptr<SE3>, int>& sw_index,
-                                              std::vector<std::shared_ptr<Type>>& sw_var_type)
-    {
-        sw_var_order.clear();
-        sw_index.clear();
-        sw_var_type.clear();
-        
-        int cnt = 0;
-        for (const auto& item : state->_sw_camleft_poses)
-        {
-            sw_var_order.push_back(item.second);
-            sw_var_type.push_back(item.second);
-            sw_index[item.second] = 6*cnt;
-            ++cnt;
-        }
-    }
     
     void RemoveLostUpdate::updateStateStereo(std::shared_ptr<State> state,
                                              std::shared_ptr<MapServer> map_server,
@@ -253,6 +285,9 @@ namespace ingvio
         H_large.setZero();
         
         row_cnt = 0;
+        
+        int valid_id_cnt = 0;
+        
         for (int i = 0; i < update_ids.size(); ++i)
         {
             Eigen::VectorXd res_block;
@@ -271,6 +306,9 @@ namespace ingvio
             res_large.block(row_cnt, 0, res_block.rows(), 1) = res_block;
             
             row_cnt += res_block.rows();
+            ++ valid_id_cnt;
+            
+            if (valid_id_cnt >= _max_valid_ids) break;
         }
         
         if (row_cnt < H_large.rows())
@@ -309,6 +347,7 @@ namespace ingvio
         
         for (const auto& item : update_ids)
             map_server->erase(item);
+
     }
     
     void RemoveLostUpdate::calcResJacobianSingleFeatAllStereoObs(
@@ -399,5 +438,26 @@ namespace ingvio
         
         H_block = V.transpose()*H_block_tmp;
         res_block = V.transpose()*res_block_tmp;
+    }
+    
+    void RemoveLostUpdate::generateSwVarOrder(const std::shared_ptr<State> state,
+                                              std::vector<std::shared_ptr<SE3>>& sw_var_order,
+                                              std::map<std::shared_ptr<SE3>, int>& sw_index_map,
+                                              std::vector<std::shared_ptr<Type>>& sw_var_type)
+    {
+        sw_var_order.clear();
+        sw_index_map.clear();
+        sw_var_type.clear();
+        
+        int col_cnt = 0;
+        
+        for (const auto& item : state->_sw_camleft_poses)
+        {
+            sw_var_order.push_back(item.second);
+            sw_var_type.push_back(item.second);
+            sw_index_map[item.second] = col_cnt;
+            
+            col_cnt += item.second->size();
+        }
     }
 }

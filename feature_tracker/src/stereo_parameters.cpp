@@ -34,6 +34,10 @@ namespace feature_tracker
         if (freq == 0) freq = 100;
         
         show_track = fs_left["show_track"];
+        
+        show_timer = fs_left["show_timer"];
+        timer_warning_thres = fs_left["timer_warning_thres"];
+        
         equalize = fs_left["equalize"];
         
         epipolar_thres = static_cast<double>(fs_left["epipolar_thres"]);

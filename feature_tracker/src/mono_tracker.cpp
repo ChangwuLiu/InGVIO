@@ -1,5 +1,7 @@
 #include "mono_tracker.h"
 
+#include "Color.h"
+
 namespace feature_tracker
 {
     int MonoTracker::n_id = 0;
@@ -25,6 +27,8 @@ namespace feature_tracker
     
     void MonoTracker::img_callback(const sensor_msgs::ImageConstPtr& img_msg)
     {
+        TicToc mono_timer;
+        
         if (first_image_flag)
         {
             first_image_flag = false;
@@ -120,6 +124,16 @@ namespace feature_tracker
                 }
                 pub_match.publish(ptr->toImageMsg());
             }
+        }
+        
+        if (param.show_timer)
+        {
+            double mono_time = mono_timer.toc();
+            
+            if (mono_time <= param.timer_warning_thres)
+                std::cout << color::setBlue << "[MonoTracker]: Mono tracking processing time = " << mono_time << " (ms) " << color::resetColor << std::endl;
+            else
+                std::cout << color::setRed << "[MonoTracker]: Mono tracking processing time = " << mono_time << " (ms) " << color::resetColor << std::endl;
         }
         
     }

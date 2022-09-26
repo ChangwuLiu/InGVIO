@@ -9,7 +9,7 @@ cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_left_
 cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_right_config.yaml"
 
 max_sliding_window_poses: 21
-max_landmark_features: 0
+max_landmark_features: 25
 
 enable_gnss: 0
 
@@ -48,4 +48,4 @@ max_baseline_ratio: 80.0
 chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
-frame_select_interval: 10
+frame_select_interval: 18

@@ -35,6 +35,8 @@ namespace feature_tracker
         
         f_threshold = fs["F_threshold"];
         show_track = fs["show_track"];
+        show_timer = fs["show_timer"];
+        timer_warning_thres = fs["timer_warning_thres"];
         equalize = fs["equalize"];
         
         fs.release();

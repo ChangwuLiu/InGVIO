@@ -28,6 +28,8 @@ namespace feature_tracker
         
         int show_track;
         int equalize;
+        double timer_warning_thres;
+        int show_timer;
         
         void readParameters(ros::NodeHandle& n);
         

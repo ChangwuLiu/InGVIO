@@ -33,6 +33,10 @@ namespace feature_tracker
         int freq;
         
         int show_track;
+        
+        int show_timer;
+        double timer_warning_thres;
+        
         int equalize;
         
         double epipolar_thres;
