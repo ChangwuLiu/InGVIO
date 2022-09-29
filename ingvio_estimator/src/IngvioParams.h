@@ -73,6 +73,20 @@ namespace ingvio
         
         int _frame_select_interval;
         
+        std::string _gnss_ephem_topic;
+        std::string _gnss_glo_ephem_topic;
+        std::string _gnss_meas_topic;
+        std::string _gnss_iono_params_topic;
+        std::string _rtk_gt_topic;
+        
+        double _gnss_elevation_thres;
+        double _gnss_psr_std_thres;
+        double _gnss_dopp_std_thres;
+        int _gnss_track_num_thres;
+        
+        int _use_fix_time_offset;
+        double _gnss_local_offset;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         

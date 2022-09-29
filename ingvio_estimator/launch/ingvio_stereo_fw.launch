@@ -1,0 +1,16 @@
+<launch>
+    <arg name="cam_config_path_left" default = "$(find feature_tracker)/../config/fw_zed2i_f9p/stereo_left_config.yaml" />
+    <arg name="cam_config_path_right" default = "$(find feature_tracker)/../config/fw_zed2i_f9p/stereo_right_config.yaml" />
+    
+    <node name="stereo_tracker" pkg="feature_tracker" type="stereo_tracker" output="screen">
+        <param name="config_file_left" type="string" value="$(arg cam_config_path_left)" />
+        <param name="config_file_right" type="string" value="$(arg cam_config_path_right)" />
+    </node>
+
+    <arg name="ingvio_config_path" default = "$(find ingvio_estimator)/../config/fw_zed2i_f9p/ingvio_stereo.yaml" />
+    <node name="ingvio_estimator" pkg="ingvio_estimator" type="ingvio" output="screen">
+        <param name="config_file" type="string" value="$(arg ingvio_config_path)" />
+    </node>
+
+    <node name="visualizer" pkg="rviz" type="rviz" output="screen" args="-d $(find ingvio_estimator)/rviz/ingvio_stereo.rviz" />
+</launch>

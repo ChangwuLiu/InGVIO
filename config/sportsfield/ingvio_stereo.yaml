@@ -11,7 +11,7 @@ cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_righ
 max_sliding_window_poses: 21
 max_landmark_features: 25
 
-enable_gnss: 0
+enable_gnss: 1
 
 noise_gyro: 0.005
 noise_accel: 0.05
@@ -49,3 +49,18 @@ chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
 frame_select_interval: 18
+
+gnss_ephem_topic: "/ublox_driver/ephem"
+gnss_glo_ephem_topic: "/ublox_driver/glo_ephem"
+gnss_meas_topic: "/ublox_driver/range_meas"
+gnss_iono_params_topic: "/ublox_driver/iono_params"
+rtk_gt_topic: "/ublox_driver/receiver_lla"
+
+gnss_elevation_thres: 20.0
+gnss_psr_std_thres: 8.0
+gnss_dopp_std_thres: 8.0
+gnss_track_num_thres: 20
+
+use_fix_time_offset: 0
+gnss_local_offset: -18.0
+

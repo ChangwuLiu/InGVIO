@@ -78,6 +78,22 @@ namespace ingvio
             _init_cov_rcv_clockbias = fs["init_cov_rcv_clockbias"];
             _init_cov_rcv_clockbias_randomwalk = fs["init_cov_rcv_clockbias_randomwalk"];
             _init_cov_yof = fs["init_cov_yof"];
+            
+            fs["gnss_ephem_topic"] >> _gnss_ephem_topic;
+            fs["gnss_glo_ephem_topic"] >> _gnss_glo_ephem_topic;
+            fs["gnss_meas_topic"] >> _gnss_meas_topic;
+            fs["gnss_iono_params_topic"] >> _gnss_iono_params_topic;
+            fs["rtk_gt_topic"] >> _rtk_gt_topic;
+            
+            _gnss_elevation_thres = fs["gnss_elevation_thres"];
+            _gnss_psr_std_thres = fs["gnss_psr_std_thres"];
+            _gnss_dopp_std_thres = fs["gnss_dopp_std_thres"];
+            _gnss_track_num_thres = fs["gnss_track_num_thres"];
+            
+            _use_fix_time_offset = fs["use_fix_time_offset"];
+            
+            if (_use_fix_time_offset)
+                _gnss_local_offset = fs["gnss_local_offset"];
         }
         
         
@@ -215,6 +231,29 @@ namespace ingvio
             std::cout << "init_cov_rcv_clockbias_randomwalk: " << _init_cov_rcv_clockbias_randomwalk << std::endl;
         
             std::cout << "init_cov_yof: " << _init_cov_yof << std::endl;
+            
+            std::cout << "gnss_ephem_topic: " << _gnss_ephem_topic << std::endl;
+            
+            std::cout << "gnss_glo_ephem_topic: " << _gnss_glo_ephem_topic << std::endl;
+            
+            std::cout << "gnss_meas_topic: " << _gnss_meas_topic << std::endl;
+            
+            std::cout << "gnss_iono_params_topic: " << _gnss_iono_params_topic << std::endl;
+            
+            std::cout << "rtk_gt_topic: " << _rtk_gt_topic << std::endl; 
+            
+            std::cout << "gnss_elevation_thres: " << _gnss_elevation_thres << std::endl;
+            
+            std::cout << "gnss_psr_std_thres: " << _gnss_psr_std_thres << std::endl;
+            
+            std::cout << "gnss_dopp_std_thres: " << _gnss_dopp_std_thres << std::endl;
+            
+            std::cout << "gnss_track_num_thres: " << _gnss_track_num_thres << std::endl;
+            
+            std::cout << "use_fix_time_offset: " << _use_fix_time_offset << std::endl;
+            
+            if (_use_fix_time_offset)
+                std::cout << "gnss_local_offset: " << _gnss_local_offset << std::endl;
         }
         
         std::cout << "===============================" << std::endl;

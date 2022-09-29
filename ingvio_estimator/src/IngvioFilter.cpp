@@ -20,6 +20,10 @@
 #include "TicToc.h"
 #include "Color.h"
 
+#include "GnssData.h"
+#include "GnssSync.h"
+#include "GvioAligner.h"
+
 namespace ingvio
 {
     void IngvioFilter::initIO()
@@ -62,11 +66,37 @@ namespace ingvio
         
         _landmark_update = std::make_shared<LandmarkUpdate>(_filter_params);
         
+        _gnss_data = std::make_shared<GnssData>();
+        
+        _gnss_sync = std::make_shared<GnssSync>(_filter_params);
+        
+        _gvio_aligner = std::make_shared<GvioAligner>(_filter_params);
+        
+        if (_filter_params._enable_gnss)
+        {
+            _sub_ephem = _nh.subscribe(_filter_params._gnss_ephem_topic, 100, &IngvioFilter::callbackEphem, this);
+            
+            _sub_glo_ephem = _nh.subscribe(_filter_params._gnss_glo_ephem_topic, 100, &IngvioFilter::callbackGloEphem, this);
+            
+            _sub_gnss_meas = _nh.subscribe(_filter_params._gnss_meas_topic, 100, &IngvioFilter::callbackGnssMeas, this);
+            
+            _sub_iono_params = _nh.subscribe(_filter_params._gnss_iono_params_topic, 100, &IngvioFilter::callbackIonoParams, this);
+            
+            _sub_rtk_gt = _nh.subscribe(_filter_params._rtk_gt_topic, 50, &IngvioFilter::callbackRtkGroundTruth, this);
+            
+            _path_spp_pub = _nh.advertise<nav_msgs::Path>("path_spp", 1);
+            
+            _path_gt_pub = _nh.advertise<nav_msgs::Path>("path_gt", 1);
+        }
+        
         _filter_params.printParams();
     }
     
     void IngvioFilter::callbackMonoFrame(const feature_tracker::MonoFrameConstPtr& mono_frame_ptr)
     {
+        if (_filter_params._enable_gnss && !_gnss_sync->isSync())
+            return;
+        
         if (!_hasImageCome)
         {
             _hasImageCome = true;
@@ -105,6 +135,23 @@ namespace ingvio
         
         MapServerManager::eraseInvalidFeatures(_map_server, _state);
         
+        if (_filter_params._enable_gnss)
+        {
+            GnssMeas gnss_meas;
+            SppMeas spp_meas;
+            
+            if (_gnss_sync->getSppAt(mono_frame_ptr->header, spp_meas))
+            {
+                
+                visualizeSpp(mono_frame_ptr->header, spp_meas);
+            }
+            
+            if (_gnss_sync->getGnssMeasAt(mono_frame_ptr->header, gnss_meas))
+            {
+                
+            }
+        }
+        
         visualize(mono_frame_ptr->header);
         
         double time_mono = timer_mono.toc();
@@ -117,6 +164,9 @@ namespace ingvio
     
     void IngvioFilter::callbackStereoFrame(const feature_tracker::StereoFrameConstPtr& stereo_frame_ptr)
     {
+        if (_filter_params._enable_gnss && !_gnss_sync->isSync())
+            return;
+        
         if (!_hasImageCome)
         {
             _hasImageCome = true;
@@ -155,6 +205,23 @@ namespace ingvio
         
         MapServerManager::eraseInvalidFeatures(_map_server, _state);
         
+        if (_filter_params._enable_gnss)
+        {
+            GnssMeas gnss_meas;
+            SppMeas spp_meas;
+            
+            if (_gnss_sync->getSppAt(stereo_frame_ptr->header, spp_meas))
+            {
+                
+                visualizeSpp(stereo_frame_ptr->header, spp_meas);
+            }
+            
+            if (_gnss_sync->getGnssMeasAt(stereo_frame_ptr->header, gnss_meas))
+            {
+                
+            }
+        }
+        
         visualize(stereo_frame_ptr->header);
         
         double time_stereo = timer_stereo.toc();
@@ -168,6 +235,16 @@ namespace ingvio
     
     void IngvioFilter::callbackIMU(sensor_msgs::Imu::ConstPtr imu_msg)
     {
+        double aux_time = ros::Time::now().toSec();
+        
+        if (_filter_params._enable_gnss)
+        {
+            _gnss_sync->storeTimePair(aux_time, imu_msg->header.stamp.toSec());
+            
+            if (!_gnss_sync->isSync())
+                return;
+        }
+        
         if (!_hasImageCome) return;
         
         _imu_propa->storeImu(imu_msg);
@@ -193,6 +270,9 @@ namespace ingvio
         T_i2w.translation() = _state->_extended_pose->valueTrans1();
         
         Eigen::Vector3d vel = _state->_extended_pose->valueTrans2();
+        
+        if (T_i2w.linear().hasNaN() || T_i2w.translation().hasNaN() || vel.hasNaN())
+            return;
         
         tf::Transform T_i2w_tf;
         tf::transformEigenToTF(T_i2w, T_i2w_tf);
@@ -226,5 +306,32 @@ namespace ingvio
         _path_w_msg.header.frame_id = "world";
         _path_w_msg.poses.push_back(pose_w);
         _path_w_pub.publish(_path_w_msg);
+    }
+    
+    void IngvioFilter::visualizeSpp(const std_msgs::Header& header, const SppMeas& spp_meas)
+    {
+        if (!_filter_params._enable_gnss || !_gnss_sync->isSync() || !_gvio_aligner->isAlign())
+            return;
+        
+        Eigen::Vector3d pos_spp_w = _gvio_aligner->getTecef2w()*spp_meas.posSpp.block<3, 1>(0, 0);
+        
+        if (pos_spp_w.hasNaN())
+            return;
+        
+        geometry_msgs::PoseStamped pose_spp;
+        pose_spp.header.stamp = header.stamp;
+        pose_spp.header.frame_id = "world";
+        pose_spp.pose.position.x = pos_spp_w.x();
+        pose_spp.pose.position.y = pos_spp_w.y();
+        pose_spp.pose.position.z = pos_spp_w.z();
+        pose_spp.pose.orientation.x = 0.0;
+        pose_spp.pose.orientation.y = 0.0;
+        pose_spp.pose.orientation.z = 0.0;
+        pose_spp.pose.orientation.w = 1.0;
+        
+        _path_spp_msg.header.stamp = pose_spp.header.stamp;
+        _path_spp_msg.header.frame_id = "world";
+        _path_spp_msg.poses.push_back(pose_spp);
+        _path_spp_pub.publish(_path_spp_msg);
     }
 }
