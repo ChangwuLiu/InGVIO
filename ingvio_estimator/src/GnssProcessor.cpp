@@ -14,27 +14,6 @@ namespace ingvio
     {
         if (!_filter_params._enable_gnss || !_gnss_sync->isSync()) return;
         
-        // test only
-        if (!_gvio_aligner->isAlign() && 
-            nav_sat_msg->status.status >= sensor_msgs::NavSatStatus::STATUS_FIX)
-        {
-            Eigen::Vector3d gt_geo, gt_ecef;
-            gt_geo.x() = nav_sat_msg->latitude;
-            gt_geo.y() = nav_sat_msg->longitude;
-            gt_geo.z() = nav_sat_msg->altitude;
-            
-            Eigen::Matrix3d R_enu2ecef = gnss_comm::geo2rotation(gt_geo);
-            
-            gt_ecef = gnss_comm::geo2ecef(gt_geo);
-            
-            Eigen::Isometry3d T_w2ecef;
-            T_w2ecef.translation() = gt_ecef;
-            T_w2ecef.linear() = R_enu2ecef;
-            
-            _gvio_aligner->T_ecef2w = T_w2ecef.inverse();
-            _gvio_aligner->_isAligned = true;
-            return;
-        }
         
         if (_gvio_aligner->isAlign() &&
             nav_sat_msg->status.status >= sensor_msgs::NavSatStatus::STATUS_FIX)

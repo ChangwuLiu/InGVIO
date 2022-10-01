@@ -45,6 +45,7 @@ add_executable(ingvio
     ${PROJECT_SOURCE_DIR}/src/Update.cpp
     ${PROJECT_SOURCE_DIR}/src/GnssProcessor.cpp
     ${PROJECT_SOURCE_DIR}/src/GnssSync.cpp
+    ${PROJECT_SOURCE_DIR}/src/GvioAligner.cpp
 )
 
 list(APPEND thirdparty_libs 

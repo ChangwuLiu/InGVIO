@@ -64,3 +64,7 @@ gnss_track_num_thres: 20
 use_fix_time_offset: 0
 gnss_local_offset: -18.0
 
+gv_align_batch_size: 20
+gv_align_max_iter: 6
+gv_align_conv_epsilon: 1e-05       
+gv_align_vel_thres: 0.4

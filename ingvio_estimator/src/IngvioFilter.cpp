@@ -140,15 +140,23 @@ namespace ingvio
             GnssMeas gnss_meas;
             SppMeas spp_meas;
             
+            bool flag = false;
+            
             if (_gnss_sync->getSppAt(mono_frame_ptr->header, spp_meas))
             {
-                
+                flag = true;
                 visualizeSpp(mono_frame_ptr->header, spp_meas);
             }
             
             if (_gnss_sync->getGnssMeasAt(mono_frame_ptr->header, gnss_meas))
             {
+                if (flag && !_gvio_aligner->isAlign())
+                    _gvio_aligner->batchAlign(gnss_meas, _state->_extended_pose, _gnss_data->latest_gnss_iono_params);
                 
+                if (_gvio_aligner->isAlign())
+                {
+                    //TODO:
+                }
             }
         }
         
@@ -210,15 +218,23 @@ namespace ingvio
             GnssMeas gnss_meas;
             SppMeas spp_meas;
             
+            bool flag = false;
+            
             if (_gnss_sync->getSppAt(stereo_frame_ptr->header, spp_meas))
             {
-                
+                flag = true;
                 visualizeSpp(stereo_frame_ptr->header, spp_meas);
             }
             
             if (_gnss_sync->getGnssMeasAt(stereo_frame_ptr->header, gnss_meas))
             {
+                if (flag && !_gvio_aligner->isAlign())
+                    _gvio_aligner->batchAlign(gnss_meas, _state->_extended_pose, _gnss_data->latest_gnss_iono_params);
                 
+                if (_gvio_aligner->isAlign())
+                {
+                    //TODO:
+                }
             }
         }
         

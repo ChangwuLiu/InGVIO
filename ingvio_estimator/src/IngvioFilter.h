@@ -30,7 +30,7 @@ namespace ingvio
     class GnssData;
     class GnssSync;
     class GvioAligner;
-    class SppMeas;
+    struct SppMeas;
     
     class IngvioFilter
     {

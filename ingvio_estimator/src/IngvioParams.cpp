@@ -94,6 +94,11 @@ namespace ingvio
             
             if (_use_fix_time_offset)
                 _gnss_local_offset = fs["gnss_local_offset"];
+            
+            _gv_align_batch_size = fs["gv_align_batch_size"];
+            _gv_align_max_iter = fs["gv_align_max_iter"];
+            _gv_align_conv_epsilon = fs["gv_align_conv_epsilon"];
+            _gv_align_vel_thres = fs["gv_align_vel_thres"];
         }
         
         
@@ -254,6 +259,14 @@ namespace ingvio
             
             if (_use_fix_time_offset)
                 std::cout << "gnss_local_offset: " << _gnss_local_offset << std::endl;
+            
+            std::cout << "gv_align_batch_size: " << _gv_align_batch_size << std::endl;
+            
+            std::cout << "gv_align_max_iter: " << _gv_align_max_iter << std::endl;
+            
+            std::cout << "gv_align_conv_epsilon: " << _gv_align_conv_epsilon << std::endl;
+        
+            std::cout << "gv_align_vel_thres: " << _gv_align_vel_thres << std::endl;
         }
         
         std::cout << "===============================" << std::endl;

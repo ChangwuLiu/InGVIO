@@ -87,6 +87,11 @@ namespace ingvio
         int _use_fix_time_offset;
         double _gnss_local_offset;
         
+        int _gv_align_batch_size;
+        int _gv_align_max_iter;
+        double _gv_align_conv_epsilon;
+        double _gv_align_vel_thres;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         
