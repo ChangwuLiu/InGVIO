@@ -20,25 +20,11 @@ namespace ingvio
         
         ~SO3() {}
         
-        void update(const Eigen::VectorXd& dx) override
-        {
-            assert(dx.rows() >= this->size() + this->idx());
-            _rot = GammaFunc(dx.block<3, 1>(this->idx(), 0), 0)*_rot;
-            _q = Eigen::Quaterniond(_rot);
-        }
+        void update(const Eigen::VectorXd& dx) override;
         
-        void setIdentity() override
-        {
-            _q.setIdentity();
-            _rot.setIdentity();
-        }
+        void setIdentity() override;
         
-        void setRandom() override
-        {
-            _q = Eigen::Quaterniond(Eigen::Vector4d::Random());
-            _q.normalize();
-            _rot = _q.toRotationMatrix();
-        }
+        void setRandom() override;
         
         const Eigen::Quaterniond& valueAsQuat() const
         { return _q; }
@@ -52,39 +38,15 @@ namespace ingvio
         const Eigen::Matrix3d& fejAsMat() const
         { return _rot_fej; }
         
-        void setValueByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q = other_quat.normalized();
-            _rot = _q.toRotationMatrix();
-        }
+        void setValueByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setValueByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot = other_mat;
-            _q = Eigen::Quaterniond(_rot);
-        }
+        void setValueByMat(const Eigen::Matrix3d& other_mat);
         
-        void setFejByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q_fej = other_quat.normalized();
-            _rot_fej = _q_fej.toRotationMatrix();
-        }
+        void setFejByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setFejByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot_fej = other_mat;
-            _q_fej = Eigen::Quaterniond(_rot_fej);
-        }
+        void setFejByMat(const Eigen::Matrix3d& other_mat);
         
-        std::shared_ptr<SO3> clone()
-        {
-            auto tmp = std::shared_ptr<SO3>(new SO3());
-            
-            tmp->setFejByQuat(this->fejAsQuat());
-            tmp->setValueByQuat(this->valueAsQuat());
-            
-            return tmp;
-        }
+        std::shared_ptr<SO3> clone();
         
     protected:
         Eigen::Quaterniond _q;
@@ -111,31 +73,11 @@ namespace ingvio
         
         ~SE3() {}
         
-        void update(const Eigen::VectorXd& dx) override
-        {
-            assert(dx.rows() >= this->idx() + this->size());
-            Eigen::Matrix3d Gamma0 = GammaFunc(dx.block<3, 1>(this->idx(), 0), 0);
-            
-            _rot = Gamma0*_rot;
-            _q = Eigen::Quaterniond(_rot);
-            
-            _vec = Gamma0*_vec + GammaFunc(dx.block<3, 1>(this->idx(), 0), 1)*dx.block<3, 1>(this->idx()+3, 0);
-        }
+        void update(const Eigen::VectorXd& dx) override;
         
-        void setIdentity() override
-        {
-            _q.setIdentity();
-            _rot.setIdentity();
-            _vec.setZero();
-        }
+        void setIdentity() override;
         
-        void setRandom() override
-        {
-            _q = Eigen::Quaterniond(Eigen::Vector4d::Random());
-            _q.normalize();
-            _rot = _q.toRotationMatrix();
-            _vec.setRandom();
-        }
+        void setRandom() override;
         
         const Eigen::Quaterniond& valueLinearAsQuat() const
         { return _q; }
@@ -146,15 +88,7 @@ namespace ingvio
         const Eigen::Vector3d& valueTrans() const
         { return _vec; }
         
-        Eigen::Isometry3d copyValueAsIso() const
-        {
-            Eigen::Isometry3d result;
-            result.setIdentity();
-            result.linear() = _rot;
-            result.translation() = _vec;
-            
-            return result;
-        }
+        Eigen::Isometry3d copyValueAsIso() const;
         
         const Eigen::Quaterniond& fejLinearAsQuat() const
         { return _q_fej; }
@@ -165,74 +99,27 @@ namespace ingvio
         const Eigen::Vector3d& fejTrans() const
         { return _vec_fej; }
         
-        Eigen::Isometry3d copyFejAsIso() const
-        {
-            Eigen::Isometry3d result;
-            result.setIdentity();
-            result.linear() = _rot_fej;
-            result.translation() = _vec_fej;
-            
-            return result;
-        }
+        Eigen::Isometry3d copyFejAsIso() const;
         
-        void setValueLinearByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q = other_quat.normalized();
-            _rot = _q.toRotationMatrix();
-        }
+        void setValueLinearByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setValueLinearByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot = other_mat;
-            _q = Eigen::Quaterniond(_rot);
-        }
+        void setValueLinearByMat(const Eigen::Matrix3d& other_mat);
         
         void setValueTrans(const Eigen::Vector3d& other_vec)
-        {
-            _vec = other_vec;
-        }
+        {  _vec = other_vec;  }
         
-        void setValueByIso(const Eigen::Isometry3d& other_iso)
-        {
-            this->setValueLinearByMat(other_iso.linear());
-            this->setValueTrans(other_iso.translation());
-        }
+        void setValueByIso(const Eigen::Isometry3d& other_iso);
         
-        void setFejLinearByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q_fej = other_quat.normalized();
-            _rot_fej = _q_fej.toRotationMatrix();
-        }
+        void setFejLinearByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setFejLinearByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot_fej = other_mat;
-            _q_fej = Eigen::Quaterniond(_rot_fej);
-        }
+        void setFejLinearByMat(const Eigen::Matrix3d& other_mat);
         
         void setFejTrans(const Eigen::Vector3d& other_vec)
-        {
-            _vec_fej = other_vec;
-        }
+        {  _vec_fej = other_vec;  }
         
-        void setFejByIso(const Eigen::Isometry3d& other_iso)
-        {
-            this->setFejLinearByMat(other_iso.linear());
-            this->setFejTrans(other_iso.translation());
-        }
+        void setFejByIso(const Eigen::Isometry3d& other_iso);
         
-        std::shared_ptr<SE3> clone()
-        {
-            auto tmp = std::shared_ptr<SE3>(new SE3());
-            
-            tmp->setValueLinearByQuat(this->valueLinearAsQuat());
-            tmp->setValueTrans(this->valueTrans());
-            
-            tmp->setFejLinearByQuat(this->fejLinearAsQuat());
-            tmp->setFejTrans(this->fejTrans());
-            
-            return tmp;
-        }
+        std::shared_ptr<SE3> clone();
         
     protected:
         Eigen::Quaterniond _q;
@@ -265,36 +152,11 @@ namespace ingvio
         
         ~SE23() {}
         
-        void update(const Eigen::VectorXd& dx) override
-        {
-            assert(dx.rows() >= this->idx() + this->size());
-            
-            Eigen::Matrix3d Gamma0 = GammaFunc(dx.block<3, 1>(this->idx(), 0), 0);
-            Eigen::Matrix3d Gamma1 = GammaFunc(dx.block<3, 1>(this->idx(), 0), 1);
-            
-            _rot = Gamma0*_rot;
-            _q = Eigen::Quaterniond(_rot);
-            
-            _vec1 = Gamma0*_vec1 + Gamma1*dx.block<3, 1>(this->idx()+3, 0);
-            _vec2 = Gamma0*_vec2 + Gamma1*dx.block<3, 1>(this->idx()+6, 0);
-        }
+        void update(const Eigen::VectorXd& dx) override;
         
-        void setIdentity() override
-        {
-            _q.setIdentity();
-            _rot.setIdentity();
-            _vec1.setZero();
-            _vec2.setZero();
-        }
+        void setIdentity() override;
         
-        void setRandom() override
-        {
-            _q = Eigen::Quaterniond(Eigen::Vector4d::Random());
-            _q.normalize();
-            _rot = _q.toRotationMatrix();
-            _vec1.setRandom();
-            _vec2.setRandom();
-        }
+        void setRandom() override;
         
         const Eigen::Quaterniond& valueLinearAsQuat() const
         { return _q; }
@@ -308,96 +170,43 @@ namespace ingvio
         const Eigen::Vector3d& valueTrans2() const
         { return _vec2; }
         
-        Eigen::Isometry3d copyValueAsIso() const
-        {
-            Eigen::Isometry3d result;
-            result.setIdentity();
-            result.linear() = _rot;
-            result.translation() = _vec1;
-            
-            return result;
-        }
+        Eigen::Isometry3d copyValueAsIso() const;
         
         const Eigen::Quaterniond& fejLinearAsQuat() const
-        { return _q_fej; }
+        {  return _q_fej; }
         
         const Eigen::Matrix3d& fejLinearAsMat() const
-        { return _rot_fej; }
+        {  return _rot_fej; }
         
         const Eigen::Vector3d& fejTrans1() const
-        { return _vec1_fej; }
+        {  return _vec1_fej; }
         
         const Eigen::Vector3d& fejTrans2() const
-        { return _vec2_fej; }
+        {  return _vec2_fej; }
         
-        Eigen::Isometry3d copyFejAsIso() const
-        {
-            Eigen::Isometry3d result;
-            result.setIdentity();
-            result.linear() = _rot_fej;
-            result.translation() = _vec1_fej;
-            
-            return result;
-        }
+        Eigen::Isometry3d copyFejAsIso() const;
         
-        void setValueLinearByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q = other_quat.normalized();
-            _rot = _q.toRotationMatrix();
-        }
+        void setValueLinearByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setValueLinearByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot = other_mat;
-            _q = Eigen::Quaterniond(_rot);
-        }
+        void setValueLinearByMat(const Eigen::Matrix3d& other_mat);
         
         void setValueTrans1(const Eigen::Vector3d& other_vec)
-        {
-            _vec1 = other_vec;
-        }
+        {  _vec1 = other_vec;  }
         
         void setValueTrans2(const Eigen::Vector3d& other_vec)
-        {
-            _vec2 = other_vec;
-        }
+        {  _vec2 = other_vec;  }
         
-        void setFejLinearByQuat(const Eigen::Quaterniond& other_quat)
-        {
-            _q_fej = other_quat.normalized();
-            _rot_fej = _q_fej.toRotationMatrix();
-        }
+        void setFejLinearByQuat(const Eigen::Quaterniond& other_quat);
         
-        void setFejLinearByMat(const Eigen::Matrix3d& other_mat)
-        {
-            _rot_fej = other_mat;
-            _q_fej = Eigen::Quaterniond(_rot_fej);
-        }
+        void setFejLinearByMat(const Eigen::Matrix3d& other_mat);
         
         void setFejTrans1(const Eigen::Vector3d& other_vec)
-        {
-            _vec1_fej = other_vec;
-        }
+        {  _vec1_fej = other_vec;  }
         
         void setFejTrans2(const Eigen::Vector3d& other_vec)
-        {
-            _vec2_fej = other_vec;
-        }
+        {  _vec2_fej = other_vec;  }
         
-        std::shared_ptr<SE23> clone()
-        {
-            auto tmp = std::shared_ptr<SE23>(new SE23());
-            
-            tmp->setValueLinearByQuat(this->valueLinearAsQuat());
-            tmp->setValueTrans1(this->valueTrans1());
-            tmp->setValueTrans2(this->valueTrans2());
-            
-            tmp->setFejLinearByQuat(this->fejLinearAsQuat());
-            tmp->setFejTrans1(this->fejTrans1());
-            tmp->setFejTrans2(this->fejTrans2());
-            
-            return tmp;
-        }
+        std::shared_ptr<SE23> clone();
         
     protected:
         Eigen::Quaterniond _q;

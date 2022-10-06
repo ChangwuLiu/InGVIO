@@ -8,27 +8,27 @@ cam_nums: 1
 cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/mono_config.yaml"
 
 max_sliding_window_poses: 21
-max_landmark_features: 12
+max_landmark_features: 15
 
-enable_gnss: 1
+enable_gnss: 0
 
 noise_gyro: 0.005
 noise_accel: 0.05
 noise_bias_gyro: 0.001
 noise_bias_accel: 0.01
-noise_rcv_clockbias: 2.0
-noise_rcv_clockbias_randomwalk: 0.2
+noise_rcv_clockbias: 0.1
+noise_rcv_clockbias_randomwalk: 0.05
 
 init_cov_rot: 0.05
 init_cov_pos: 0.1
 init_cov_vel: 0.25
 init_cov_bg: 0.01
 init_cov_ba: 0.01
-init_cov_ext_rot: 8e-03
-init_cov_ext_pos: 5e-04
-init_cov_rcv_clockbias: 3.0
+init_cov_ext_rot: 8e-05
+init_cov_ext_pos: 5e-06
+init_cov_rcv_clockbias: 2.0
 init_cov_rcv_clockbias_randomwalk: 1.0
-init_cov_yof: 0.03
+init_cov_yof: 0.015
 
 gravity_norm: 9.8
 max_imu_buffer_size: 1000
@@ -64,6 +64,6 @@ use_fix_time_offset: 0
 gnss_local_offset: -18.0
 
 gv_align_batch_size: 25
-gv_align_max_iter: 6
+gv_align_max_iter: 10
 gv_align_conv_epsilon: 1e-05       
 gv_align_vel_thres: 0.4

@@ -160,7 +160,9 @@ namespace ingvio
             res_thin = res_large;
         }
         
+        /*
         std::cout << "[SwMargUpdate]: Num of mono feats used in selected pose = " << feats_cnt << std::endl;
+        */
         
         StateManager::ekfUpdate(state, sw_var_type, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
     }
@@ -332,7 +334,9 @@ namespace ingvio
             res_thin = res_large;
         }
         
+        /*
         std::cout << "[SwMargUpdate]: Num of stereo feats used in selected pose = " << feats_cnt << std::endl;
+        */
         
         StateManager::ekfUpdate(state, sw_var_type, H_thin, res_thin, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_thin.rows(), res_thin.rows()));
         

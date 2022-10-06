@@ -40,11 +40,7 @@ namespace ingvio
         
         ~Vec3() {}
         
-        void update(const Eigen::VectorXd& dx) override
-        {
-            assert(dx.rows() >= this->idx() + this->size());
-            _vec += dx.block<3, 1>(this->idx(), 0);
-        }
+        void update(const Eigen::VectorXd& dx) override;
         
         void setIdentity() override
         {
@@ -67,15 +63,7 @@ namespace ingvio
         void setFej(const Eigen::Vector3d& other_vec_fej) 
         { _vec_fej = other_vec_fej; }
         
-        std::shared_ptr<Vec3> clone()
-        {
-            auto tmp = std::shared_ptr<Vec3>(new Vec3());
-            
-            tmp->setValue(this->value());
-            tmp->setFej(this->fej());
-            
-            return tmp;
-        }
+        std::shared_ptr<Vec3> clone();
         
     protected:
         Eigen::Vector3d _vec;
@@ -93,23 +81,14 @@ namespace ingvio
         
         ~Scalar() {}
         
-        void update(const Eigen::VectorXd& dx) override
-        {
-            assert(dx.rows() >= this->idx() + this->size());
-            _scalar += dx(this->idx());
-        }
+        void update(const Eigen::VectorXd& dx) override;
         
         void setIdentity() override
         {
             _scalar = 0.0;
         }
         
-        void setRandom() override
-        {
-            Eigen::Vector2d tmp;
-            tmp.setRandom();
-            _scalar = tmp(0);
-        }
+        void setRandom() override;
         
         const double& value() const
         { return _scalar; }
@@ -123,15 +102,7 @@ namespace ingvio
         void setFej(const double& other_scalar_fej) 
         { _scalar_fej = other_scalar_fej; }
         
-        std::shared_ptr<Scalar> clone()
-        {
-            auto tmp = std::shared_ptr<Scalar>(new Scalar());
-            
-            tmp->setValue(this->value());
-            tmp->setFej(this->fej());
-            
-            return tmp;
-        }
+        std::shared_ptr<Scalar> clone();
         
     protected:
         double _scalar;

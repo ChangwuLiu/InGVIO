@@ -31,6 +31,7 @@ namespace ingvio
     class GnssSync;
     class GvioAligner;
     struct SppMeas;
+    class GnssUpdate;
     
     class IngvioFilter
     {
@@ -84,6 +85,8 @@ namespace ingvio
         std::shared_ptr<GnssSync> _gnss_sync;
         
         std::shared_ptr<GvioAligner> _gvio_aligner;
+        
+        std::shared_ptr<GnssUpdate> _gnss_update;
         
         void callbackMonoFrame(const feature_tracker::MonoFrameConstPtr& mono_frame_ptr);
         

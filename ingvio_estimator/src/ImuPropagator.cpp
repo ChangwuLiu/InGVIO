@@ -127,18 +127,18 @@ namespace ingvio
                         state->_gnss.at(static_cast<State::GNSSType>(i))->setValue(clockbias_hat_new);
                     }
             
-            Phi.block<3, 3>(3, 0) = 0.5*skew(_gravity)*std::pow(dt, 2.0);
+            Phi.block<3, 3>(3, 0) = 0.5*skew(_gravity)*std::pow(dt, 2);
             Phi.block<3, 3>(3, 6) = dt*Eigen::Matrix3d::Identity();
             Phi.block<3, 3>(6, 0) = skew(_gravity)*dt;
             
             Phi.block<3, 3>(0, 9) = -R_hat*Gamma1*dt;
-            Phi.block<3, 3>(6, 12) = Phi.block<3, 3>(0, 9);
+            Phi.block<3, 3>(6, 12) = -R_hat*Gamma1*dt;
             
             Phi.block<3, 3>(3, 12) = -R_hat*Gamma2*std::pow(dt, 2);
             
-            Phi.block<3, 3>(6, 9) = skew(v_hat_new)*Phi.block<3, 3>(0, 9) + R_hat*Psi1Func(gyro_unbiased, acc_unbiased, dt);
+            Phi.block<3, 3>(6, 9) = -skew(v_hat_new)*R_hat*Gamma1*dt + R_hat*Psi1Func(gyro_unbiased, acc_unbiased, dt);
             
-            Phi.block<3, 3>(3, 9) = skew(p_hat_new)*Phi.block<3, 3>(0, 9) + R_hat*Psi2Func(gyro_unbiased, acc_unbiased, dt);
+            Phi.block<3, 3>(3, 9) = -skew(p_hat_new)*R_hat*Gamma1*dt + R_hat*Psi2Func(gyro_unbiased, acc_unbiased, dt);
         }
         else
         {

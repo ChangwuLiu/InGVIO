@@ -17,8 +17,8 @@ noise_gyro: 0.005
 noise_accel: 0.05
 noise_bias_gyro: 0.001
 noise_bias_accel: 0.01
-noise_rcv_clockbias: 2.0
-noise_rcv_clockbias_randomwalk: 0.2
+noise_rcv_clockbias: 0.1
+noise_rcv_clockbias_randomwalk: 0.05
 
 init_cov_rot: 0.05
 init_cov_pos: 0.1

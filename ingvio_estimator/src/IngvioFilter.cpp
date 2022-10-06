@@ -23,6 +23,7 @@
 #include "GnssData.h"
 #include "GnssSync.h"
 #include "GvioAligner.h"
+#include "GnssUpdate.h"
 
 namespace ingvio
 {
@@ -71,6 +72,8 @@ namespace ingvio
         _gnss_sync = std::make_shared<GnssSync>(_filter_params);
         
         _gvio_aligner = std::make_shared<GvioAligner>(_filter_params);
+        
+        _gnss_update = std::make_shared<GnssUpdate>();
         
         if (_filter_params._enable_gnss)
         {
@@ -155,7 +158,17 @@ namespace ingvio
                 
                 if (_gvio_aligner->isAlign())
                 {
-                    //TODO:
+                    _gnss_update->checkYofStatus(_state, _gvio_aligner);
+                    
+                    _gnss_update->removeUntrackedSys(_state, gnss_meas);
+                    
+                    _gnss_update->updateTrackedSys(_state, gnss_meas, _gvio_aligner,
+                                                   _gnss_data->latest_gnss_iono_params);
+                    
+                    if (flag)
+                        _gnss_update->addNewTrackedSys(_state, gnss_meas, spp_meas,
+                                                       _gvio_aligner,
+                                                       _gnss_data->latest_gnss_iono_params);
                 }
             }
         }
@@ -233,7 +246,17 @@ namespace ingvio
                 
                 if (_gvio_aligner->isAlign())
                 {
-                    //TODO:
+                    _gnss_update->checkYofStatus(_state, _gvio_aligner);
+                    
+                    _gnss_update->removeUntrackedSys(_state, gnss_meas);
+                    
+                    _gnss_update->updateTrackedSys(_state, gnss_meas, _gvio_aligner,
+                                                   _gnss_data->latest_gnss_iono_params);
+                    
+                    if (flag)
+                        _gnss_update->addNewTrackedSys(_state, gnss_meas, spp_meas,
+                                                       _gvio_aligner,
+                                                       _gnss_data->latest_gnss_iono_params);
                 }
             }
         }

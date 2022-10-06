@@ -101,8 +101,10 @@ namespace ingvio
             if (valid_id_cnt >= _max_valid_ids) break;
         }
         
+        /*
         if (valid_id_cnt > 0)
             std::cout << "[RemoveLostUpdate]: Features used in remove update = " << valid_id_cnt << std::endl;
+        */
         
         if (row_cnt < max_possible_rows || col_cnt < max_possible_cols)
         {

@@ -31,10 +31,14 @@ include_directories(
 
 add_executable(ingvio 
     ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+    ${PROJECT_SOURCE_DIR}/src/VecState.cpp
+    ${PROJECT_SOURCE_DIR}/src/PoseState.cpp
+    ${PROJECT_SOURCE_DIR}/src/AnchoredLandmark.cpp
     ${PROJECT_SOURCE_DIR}/src/ImuPropagator.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioFilter.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioNode.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
+    ${PROJECT_SOURCE_DIR}/src/MapServer.cpp
     ${PROJECT_SOURCE_DIR}/src/MapServerManager.cpp
     ${PROJECT_SOURCE_DIR}/src/RemoveLostUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/State.cpp
@@ -46,6 +50,9 @@ add_executable(ingvio
     ${PROJECT_SOURCE_DIR}/src/GnssProcessor.cpp
     ${PROJECT_SOURCE_DIR}/src/GnssSync.cpp
     ${PROJECT_SOURCE_DIR}/src/GvioAligner.cpp
+    ${PROJECT_SOURCE_DIR}/src/GnssUpdate.cpp
+    ${PROJECT_SOURCE_DIR}/src/GnssManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/GnssData.cpp
 )
 
 list(APPEND thirdparty_libs 
@@ -64,7 +71,10 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
     
 add_executable(test_state_manager
+    ${PROJECT_SOURCE_DIR}/src/VecState.cpp
+    ${PROJECT_SOURCE_DIR}/src/PoseState.cpp
     ${PROJECT_SOURCE_DIR}/test/TestStateManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/AnchoredLandmark.cpp
     ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
     ${PROJECT_SOURCE_DIR}/src/State.cpp
     ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
@@ -75,6 +85,9 @@ gtest_discover_tests(test_state_manager)
 
 add_executable(test_propagator
     ${PROJECT_SOURCE_DIR}/test/TestPropagator.cpp
+    ${PROJECT_SOURCE_DIR}/src/VecState.cpp
+    ${PROJECT_SOURCE_DIR}/src/PoseState.cpp
+    ${PROJECT_SOURCE_DIR}/src/AnchoredLandmark.cpp
     ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
     ${PROJECT_SOURCE_DIR}/src/State.cpp
     ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
@@ -86,12 +99,16 @@ gtest_discover_tests(test_propagator)
 
 add_executable(test_map_server
     ${PROJECT_SOURCE_DIR}/test/TestMapServer.cpp
+    ${PROJECT_SOURCE_DIR}/src/VecState.cpp
+    ${PROJECT_SOURCE_DIR}/src/PoseState.cpp
     ${PROJECT_SOURCE_DIR}/test/GenerateNoise.cpp
+    ${PROJECT_SOURCE_DIR}/src/AnchoredLandmark.cpp
     ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
     ${PROJECT_SOURCE_DIR}/src/State.cpp
     ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
     ${PROJECT_SOURCE_DIR}/src/ImuPropagator.cpp
+    ${PROJECT_SOURCE_DIR}/src/MapServer.cpp
     ${PROJECT_SOURCE_DIR}/src/MapServerManager.cpp
     ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
 )
@@ -100,10 +117,14 @@ gtest_discover_tests(test_map_server)
 
 add_executable(test_triangulator
     ${PROJECT_SOURCE_DIR}/test/TestTriangulator.cpp
+    ${PROJECT_SOURCE_DIR}/src/VecState.cpp
+    ${PROJECT_SOURCE_DIR}/src/PoseState.cpp
+    ${PROJECT_SOURCE_DIR}/src/AnchoredLandmark.cpp
     ${PROJECT_SOURCE_DIR}/test/GenerateNoise.cpp
     ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
     ${PROJECT_SOURCE_DIR}/src/IngvioParams.cpp
     ${PROJECT_SOURCE_DIR}/src/AuxGammaFunc.cpp
+    ${PROJECT_SOURCE_DIR}/src/MapServer.cpp
 )
 target_link_libraries(test_triangulator ${GTEST_BOTH_LIBRARIES} pthread ${thirdparty_libs})
 gtest_discover_tests(test_triangulator)
