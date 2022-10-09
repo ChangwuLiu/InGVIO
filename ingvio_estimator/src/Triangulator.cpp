@@ -9,21 +9,32 @@ namespace ingvio
 {
     double Triangulator::findLongestTrans(
         const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,
+        const std::map<double, std::shared_ptr<MonoMeas>>& mobs,
         double& max_length) const
     {
         assert(sw_poses.size() >= 2);
         
-        const auto& item0 = sw_poses.begin();
-        const double timestamp0 = item0->first;
-        const std::shared_ptr<SE3> pose0 = item0->second;
+        const auto& item_last = sw_poses.rbegin();
+        const double timestamp_last = item_last->first;
+        const std::shared_ptr<SE3> pose_last = item_last->second;
+        
+        Eigen::Vector3d unit_feat_last;
+        unit_feat_last.head<2>() = mobs.at(timestamp_last)->asVec();
+        unit_feat_last.z() = 1.0;
+        unit_feat_last.normalize();
+        
+        const Eigen::Vector3d unit_feat_w = pose_last->valueLinearAsMat()*unit_feat_last;
+        const Eigen::Matrix3d proj = Eigen::Matrix3d::Identity()-unit_feat_w*unit_feat_w.transpose();
         
         max_length = -INFINITY;
-        double max_timestamp = timestamp0;
+        double max_timestamp = timestamp_last;
         for (const auto& item : sw_poses)
         {
-            if (item.first == timestamp0) continue;
+            if (item.first == timestamp_last) continue;
             
-            double trans = (item.second->valueTrans()-pose0->valueTrans()).norm();
+            const Eigen::Vector3d trans_vec = proj*(item.second->valueTrans()-pose_last->valueTrans());
+            
+            double trans = std::abs(trans_vec.norm());
             if (trans > max_length)
             {
                 max_length = trans;
@@ -38,20 +49,20 @@ namespace ingvio
         const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,
         std::map<double, std::shared_ptr<SE3>, std::less<double>>& rel_sw_poses) const
     {
-        const std::shared_ptr<SE3> pose0 = sw_poses.begin()->second;
-        const double timestamp0 = sw_poses.begin()->first;
+        const std::shared_ptr<SE3> pose_last = sw_poses.rbegin()->second;
+        const double timestamp_last = sw_poses.rbegin()->first;
         
         rel_sw_poses.clear();
         for (const auto& item : sw_poses)
         {
             rel_sw_poses[item.first] = std::make_shared<SE3>();
             
-            if (item.first == timestamp0)
+            if (item.first == timestamp_last)
             {
-                rel_sw_poses[timestamp0]->setIdentity();
+                rel_sw_poses[timestamp_last]->setIdentity();
                 continue;
             }
-            rel_sw_poses[item.first]->setValueByIso(item.second->copyValueAsIso().inverse()*pose0->copyValueAsIso());
+            rel_sw_poses[item.first]->setValueByIso(item.second->copyValueAsIso().inverse()*pose_last->copyValueAsIso());
         }
     }
     
@@ -149,14 +160,14 @@ namespace ingvio
         
         this->filterCommonTimestamp<MonoMeas>(sw_poses_raw, mono_obs, sw_poses, mobs);
         
-        if (mobs.size() <= 3)
+        if (mobs.size() <= 4)
         {
             pf.setZero();
             return false;
         }
         
         double max_trans;
-        double max_timestamp = findLongestTrans(sw_poses, max_trans);
+        double max_timestamp = findLongestTrans(sw_poses, mobs, max_trans);
         
         if (max_trans < _trans_thres) return false;
             
@@ -164,12 +175,12 @@ namespace ingvio
         calcRelaSwPose(sw_poses, rel_sw_poses);
         
         Eigen::Vector3d solution;
-        const double timestamp0 = rel_sw_poses.begin()->first;
-        const std::shared_ptr<SE3> pose0 = sw_poses.begin()->second;
+        const double timestamp_last = rel_sw_poses.rbegin()->first;
+        const std::shared_ptr<SE3> pose_last = sw_poses.rbegin()->second;
         
-        solution.x() = mobs[timestamp0]->_u0;
-        solution.y() = mobs[timestamp0]->_v0;
-        solution.z() = 1.0/initDepth(solution.head<2>(), mobs[max_timestamp]->asVec(), rel_sw_poses[max_timestamp]);
+        solution.x() = mobs[timestamp_last]->_u0;
+        solution.y() = mobs[timestamp_last]->_v0;
+        solution.z() = 1.0/initDepth(mobs[timestamp_last]->asVec(), mobs[max_timestamp]->asVec(), rel_sw_poses[max_timestamp]);
         
         /*
         std::cout << "init pose = " << (pose0->copyValueAsIso().inverse()*Eigen::Vector3d(solution.x()/solution.z(), solution.y()/solution.z(), 1.0/solution.z())).transpose() << std::endl;
@@ -240,10 +251,10 @@ namespace ingvio
         }
         while (outer_loop_cnt++ < _outer_loop_max_iter && delta_norm > _conv_precision);
         
-        Eigen::Vector3d pf0;
-        pf0.z() = 1.0/solution.z();
-        pf0.x() = solution.x()*pf0.z();
-        pf0.y() = solution.y()*pf0.z();
+        Eigen::Vector3d pf_last;
+        pf_last.z() = 1.0/solution.z();
+        pf_last.x() = solution.x()*pf_last.z();
+        pf_last.y() = solution.y()*pf_last.z();
         
         pf.setZero();
         
@@ -252,12 +263,12 @@ namespace ingvio
         
         for (const auto& item : rel_sw_poses)
         {
-            Eigen::Vector3d tmp = item.second->copyValueAsIso()*pf0;
-            if (tmp.z() <= 0.0)
+            Eigen::Vector3d tmp = item.second->copyValueAsIso()*pf_last;
+            if (tmp.z() <= _min_depth)
                 return false;
         }
         
-        Eigen::HouseholderQR<Eigen::MatrixXd> qr(pf0);
+        Eigen::HouseholderQR<Eigen::MatrixXd> qr(pf_last);
         Eigen::MatrixXd Q = qr.householderQ();
         
         double base_line_max = 0.0;
@@ -272,10 +283,10 @@ namespace ingvio
                 base_line_max = base_line;
         }
         
-        if (pf0.z() < _min_depth || pf0.z() > _max_depth)
+        if (pf_last.z() < _min_depth || pf_last.z() > _max_depth)
             return false;
         
-        pf = pose0->copyValueAsIso()*pf0;
+        pf = pose_last->copyValueAsIso()*pf_last;
         
         if (pf.hasNaN())
         {

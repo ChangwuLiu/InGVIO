@@ -26,6 +26,7 @@ namespace ingvio
     class Triangulator;
     class RemoveLostUpdate;
     class SwMargUpdate;
+    class KeyframeUpdate;
     class LandmarkUpdate;
     class GnssData;
     class GnssSync;
@@ -77,6 +78,8 @@ namespace ingvio
         std::shared_ptr<RemoveLostUpdate> _remove_lost_update;
         
         std::shared_ptr<SwMargUpdate> _sw_marg_update;
+        
+        std::shared_ptr<KeyframeUpdate> _keyframe_update;
         
         std::shared_ptr<LandmarkUpdate> _landmark_update;
         

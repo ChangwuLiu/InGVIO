@@ -45,6 +45,7 @@ add_executable(ingvio
     ${PROJECT_SOURCE_DIR}/src/StateManager.cpp
     ${PROJECT_SOURCE_DIR}/src/LandmarkUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/SwMargUpdate.cpp
+    ${PROJECT_SOURCE_DIR}/src/KeyframeUpdate.cpp
     ${PROJECT_SOURCE_DIR}/src/Triangulator.cpp
     ${PROJECT_SOURCE_DIR}/src/Update.cpp
     ${PROJECT_SOURCE_DIR}/src/GnssProcessor.cpp

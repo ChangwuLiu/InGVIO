@@ -57,6 +57,7 @@ namespace ingvio
         
         double findLongestTrans(
             const std::map<double, std::shared_ptr<SE3>, std::less<double>>& sw_poses,
+            const std::map<double, std::shared_ptr<MonoMeas>>& mobs,
             double& max_length) const;
         
         double initDepth(const Eigen::Vector2d& m1,

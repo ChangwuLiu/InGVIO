@@ -1,3 +1,5 @@
+#include <unordered_set>
+
 #include "StateManager.h"
 
 #include "MapServer.h"
@@ -124,7 +126,127 @@ namespace ingvio
         }
         
         StateManager::ekfUpdate(state, var_order, H_large, res_large, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_large.rows(), res_large.rows()));
+    }
+    
+    void LandmarkUpdate::updateLandmarkMonoSw(std::shared_ptr<State> state,
+                                            std::shared_ptr<MapServer> map_server)
+    {
+        if (state->_anchored_landmarks.size() == 0) return;
         
+        if (state->_timestamp != state->_sw_camleft_poses.rbegin()->first)
+        {
+            std::cout << "[LandmarkUpdate]: Last sw pose is not at curr time!" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        
+        const std::shared_ptr<SE3> curr_pose = state->_sw_camleft_poses.rbegin()->second;
+        
+        std::vector<std::shared_ptr<Type>> var_order;
+        var_order.push_back(curr_pose);
+        
+        std::map<std::shared_ptr<Type>, int> sub_var_col_idx;
+        sub_var_col_idx[curr_pose] = 0;
+        
+        const int max_possible_rows = 2*state->_anchored_landmarks.size();
+        const int max_possible_cols = 6*state->_sw_camleft_poses.size() + 3*state->_anchored_landmarks.size();
+        
+        Eigen::MatrixXd H_large(max_possible_rows, max_possible_cols);
+        Eigen::VectorXd res_large(max_possible_rows);
+        H_large.setZero();
+        res_large.setZero();
+        
+        int row_cnt = 0;
+        int col_cnt = 6;
+        
+        for (const auto& item : state->_anchored_landmarks)
+        {
+            const int& id = item.first;
+            if (map_server->find(id) == map_server->end())
+            {
+                std::cout << "[LandmarkUpdate]: Landmark in state not in map server!" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            else if (map_server->at(id)->_ftype != FeatureInfo::FeatureType::SLAM)
+            {
+                std::cout << "[LandmarkUpdate]: Landmark in state not marked SLAM type in map server!" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            else if (map_server->at(id)->_mono_obs.find(state->_timestamp) == map_server->at(id)->_mono_obs.end())
+            {
+                std::cout << "[LandmarkUpdate]: Landmark in state not tracked to curr time! Should have been marged before!" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            
+            if (map_server->at(id)->_landmark != state->_anchored_landmarks.at(id))
+            {
+                std::cout << "[LandmarkUpdate]: Landmark ptr in state not the same as that in map server!" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            
+            std::shared_ptr<SE3> anchored_pose_ptr = item.second->getAnchoredPose();
+            std::shared_ptr<AnchoredLandmark> lm_ptr = item.second;
+            
+            Eigen::Vector2d res;
+            Eigen::Matrix<double, 2, 6> H_fj_pose;
+            Eigen::Matrix<double, 2, 6> H_fj_anch;
+            Eigen::Matrix<double, 2, 3> H_fj_pf;
+            
+            this->calcResJacobianSingleLandmarkMono(map_server->at(id), state, res, 
+                                                    H_fj_pose, H_fj_anch, H_fj_pf);
+            
+            if (curr_pose == anchored_pose_ptr)
+            {
+                std::cout << "[LandmarkUpdate]: Warning! Current pose is the same as anchored pose!" << std::endl;
+                continue;
+            }
+            
+            std::vector<std::shared_ptr<Type>> var_order_chi2(3);
+            var_order_chi2[0] = curr_pose;
+            var_order_chi2[1] = anchored_pose_ptr;
+            var_order_chi2[2] = lm_ptr;
+            
+            Eigen::MatrixXd H_chi2(2, 15);
+            H_chi2.block<2, 6>(0, 0) = H_fj_pose;
+            H_chi2.block<2, 6>(0, 6) = H_fj_anch;
+            H_chi2.block<2, 3>(0, 12) = H_fj_pf;
+            
+            if (!testChiSquared(state, res, H_chi2, var_order_chi2, this->_noise))
+                continue;
+            
+            res_large.block<2, 1>(row_cnt, 0) = res;
+            
+            H_large.block<2, 6>(row_cnt, sub_var_col_idx.at(curr_pose)) = H_fj_pose;
+            
+            if (sub_var_col_idx.find(anchored_pose_ptr) == sub_var_col_idx.end())
+            {
+                sub_var_col_idx[anchored_pose_ptr] = col_cnt;
+                col_cnt += 6;
+                var_order.push_back(anchored_pose_ptr);
+            }
+            
+            H_large.block<2, 6>(row_cnt, sub_var_col_idx.at(anchored_pose_ptr)) = H_fj_anch;
+            
+            if (sub_var_col_idx.find(lm_ptr) == sub_var_col_idx.end())
+            {
+                sub_var_col_idx[lm_ptr] = col_cnt;
+                col_cnt += 3;
+                var_order.push_back(lm_ptr);
+            }
+            
+            H_large.block<2, 3>(row_cnt, sub_var_col_idx.at(lm_ptr)) = H_fj_pf;
+            
+            row_cnt += 2;
+        }
+        
+        if (row_cnt == 0) return;
+        
+        if (max_possible_rows > row_cnt || max_possible_cols > col_cnt)
+        {
+            H_large.conservativeResize(row_cnt, col_cnt);
+            res_large.conservativeResize(row_cnt, 1);
+        }
+        
+        StateManager::ekfUpdate(state, var_order, H_large, res_large, std::pow(this->_noise, 2)*Eigen::MatrixXd::Identity(res_large.rows(), res_large.rows()));
     }
     
     void LandmarkUpdate::changeLandmarkAnchor(std::shared_ptr<State> state,
@@ -172,15 +294,62 @@ namespace ingvio
         }
     }
     
+    void LandmarkUpdate::changeLandmarkAnchor(std::shared_ptr<State> state, 
+                                              std::shared_ptr<MapServer> map_server,
+                                              const std::vector<double>& marg_kfs)
+    {
+        if (marg_kfs.size() == 0)
+            return;
+        
+        std::unordered_set<std::shared_ptr<SE3>> old_anchor_set;
+        for (const double& marg : marg_kfs)
+            old_anchor_set.insert(state->_sw_camleft_poses.at(marg));
+        
+        const std::shared_ptr<SE3> new_anchor = state->_sw_camleft_poses.rbegin()->second;
+        
+        std::vector<int> ids_to_marg;
+        
+        for (auto& item : *map_server)
+        {
+            if (item.second->_ftype != FeatureInfo::FeatureType::SLAM)
+                continue;
+            
+            if (old_anchor_set.find(item.second->_landmark->getAnchoredPose()) != old_anchor_set.end())
+            {
+                const Eigen::Vector3d pf = item.second->_landmark->valuePosXyz();
+                const Eigen::Vector3d body = new_anchor->valueLinearAsMat().transpose()*(pf - new_anchor->valueTrans());
+                
+                if (body.z() <= 0)
+                {
+                    ids_to_marg.push_back(item.first);
+                    continue;
+                }
+                
+                FeatureInfoManager::changeAnchoredPose(item.second, state, state->_sw_camleft_poses.rbegin()->first);
+                
+                if (item.second->_landmark->getAnchoredPose() != new_anchor)
+                    ids_to_marg.push_back(item.first);
+            }
+        }
+        
+        for (const int& id: ids_to_marg)
+        {
+            StateManager::margAnchoredLandmarkInState(state, id);
+            map_server->erase(id);
+        }
+    }
+    
     void LandmarkUpdate::initNewLandmarkMono(std::shared_ptr<State> state,
                                              std::shared_ptr<MapServer> map_server,
-                                             std::shared_ptr<Triangulator> tri)
+                                             std::shared_ptr<Triangulator> tri,
+                                             int min_init_poses)
     {
-        double marg_time = state->nextMargTime();
+        if (state->_sw_camleft_poses.size() < min_init_poses)
+            return;
         
         const int vac_num_lm = state->_state_params._max_landmarks - state->_anchored_landmarks.size();
         
-        if (marg_time == INFINITY || vac_num_lm <= 0) return;
+        if (vac_num_lm <= 0) return;
         
         std::vector<int> ids_to_init;
         
@@ -188,7 +357,7 @@ namespace ingvio
         {
             if (ids_to_init.size() >= vac_num_lm) break;
             
-            if (item.second->_mono_obs.find(marg_time) == item.second->_mono_obs.end() || 
+            if (item.second->_mono_obs.size() < min_init_poses || 
                 item.second->_ftype == FeatureInfo::FeatureType::SLAM)
                 continue;
             
@@ -216,7 +385,7 @@ namespace ingvio
             
             if (!StateManager::addVariableDelayed(state, map_server->at(id)->_landmark,
                                                   sw_var_type, Hx_block, Hf_block, res_block,
-                                                  this->_noise, 0.95, true))
+                                                  50.0*this->_noise, 0.95, true))
                 continue;
             
             if (state->_anchored_landmarks.find(id) != state->_anchored_landmarks.end())
@@ -231,6 +400,7 @@ namespace ingvio
         }
         
     }
+    
     
     void LandmarkUpdate::calcResJacobianSingleFeatAllMonoObs(
         const std::shared_ptr<FeatureInfo> feature_info,
@@ -374,6 +544,48 @@ namespace ingvio
         H_fj_anch.block<2, 3>(0, 0) = -H_proj*R_w2cl*skew(pf_w);
         
         H_fj_pf = H_proj*R_w2cl;
+    }
+    
+    void LandmarkUpdate::calcResJacobianSingleLandmarkMono(
+        const std::shared_ptr<FeatureInfo> feature_info,
+        const std::shared_ptr<State> state,
+        Eigen::Vector2d& res,
+        Eigen::Matrix<double, 2, 6>& H_fj_pose,
+        Eigen::Matrix<double, 2, 6>& H_fj_anch,
+        Eigen::Matrix<double, 2, 3>& H_fj_pf)
+    {
+        const Eigen::Vector3d pf_w = feature_info->_landmark->valuePosXyz();
+        
+        const double curr_time = state->_timestamp;
+        
+        const Eigen::Matrix3d R_cm_T = state->_sw_camleft_poses.at(curr_time)->valueLinearAsMat().transpose();        
+        const Eigen::Vector3d p_cm = state->_sw_camleft_poses.at(curr_time)->valueTrans();
+        
+        const Eigen::Vector3d pf_cl = R_cm_T*(pf_w-p_cm);
+        
+        if (feature_info->_mono_obs.find(curr_time) == feature_info->_mono_obs.end() ||
+            feature_info->_ftype != FeatureInfo::FeatureType::SLAM)
+        {
+            std::cout << "[LandmarkUpdate]: Cannot calc curr slam feature mono res and jacobi!" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        
+        res = feature_info->_mono_obs.at(curr_time)->asVec() - Eigen::Vector2d(pf_cl.x()/pf_cl.z(), pf_cl.y()/pf_cl.z());
+        
+        Eigen::Matrix<double, 2, 3> H_proj = Eigen::Matrix<double, 2, 3>::Zero();
+        H_proj(0, 0) = 1.0/pf_cl.z();
+        H_proj(1, 1) = 1.0/pf_cl.z();
+        H_proj(0, 2) = -pf_cl.x()/std::pow(pf_cl.z(), 2);
+        H_proj(1, 2) = -pf_cl.y()/std::pow(pf_cl.z(), 2);
+        
+        H_fj_pose.setZero();
+        H_fj_pose.block<2, 3>(0, 0) = H_proj*R_cm_T*skew(pf_w);
+        H_fj_pose.block<2, 3>(0, 3) = -H_proj*R_cm_T;
+        
+        H_fj_anch.setZero();
+        H_fj_anch.block<2, 3>(0, 0) = -H_fj_pose.block<2, 3>(0, 0);
+        
+        H_fj_pf = H_proj*R_cm_T;
     }
     
     void LandmarkUpdate::calcResJacobianSingleLandmarkStereo(

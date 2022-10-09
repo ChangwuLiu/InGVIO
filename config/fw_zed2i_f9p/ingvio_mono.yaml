@@ -26,9 +26,9 @@ init_cov_bg: 0.01
 init_cov_ba: 0.01
 init_cov_ext_rot: 8e-03
 init_cov_ext_pos: 5e-04
-init_cov_rcv_clockbias: 3.0
+init_cov_rcv_clockbias: 2.0
 init_cov_rcv_clockbias_randomwalk: 1.0
-init_cov_yof: 0.03
+init_cov_yof: 0.015
 
 gravity_norm: 9.8
 max_imu_buffer_size: 10000
@@ -47,7 +47,7 @@ max_baseline_ratio: 80.0
 chi2_max_dof: 150
 chi2_thres: 0.95
 visual_noise: 0.035
-frame_select_interval: 12
+frame_select_interval: 18
 
 gnss_ephem_topic: "/ublox_driver/ephem"
 gnss_glo_ephem_topic: "/ublox_driver/glo_ephem"

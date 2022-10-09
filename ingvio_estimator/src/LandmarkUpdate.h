@@ -30,15 +30,23 @@ namespace ingvio
         void updateLandmarkMono(std::shared_ptr<State> state,
                                 std::shared_ptr<MapServer> map_server);
         
+        void updateLandmarkMonoSw(std::shared_ptr<State> state,
+                                  std::shared_ptr<MapServer> map_server);
+        
         void initNewLandmarkMono(std::shared_ptr<State> state,
                                  std::shared_ptr<MapServer> map_server,
-                                 std::shared_ptr<Triangulator> tri);
+                                 std::shared_ptr<Triangulator> tri,
+                                 int min_init_poses);
         
         void changeLandmarkAnchor(std::shared_ptr<State> state, 
                                   std::shared_ptr<MapServer> map_server);
         
+        void changeLandmarkAnchor(std::shared_ptr<State> state, 
+                                  std::shared_ptr<MapServer> map_server,
+                                  const std::vector<double>& marg_kfs);
+        
         void updateLandmarkStereo(std::shared_ptr<State> state,
-                                std::shared_ptr<MapServer> map_server);
+                                  std::shared_ptr<MapServer> map_server);
         
         void initNewLandmarkStereo(std::shared_ptr<State> state,
                                    std::shared_ptr<MapServer> map_server,
@@ -64,6 +72,13 @@ namespace ingvio
             Eigen::VectorXd& res_block,
             Eigen::MatrixXd& Hx_block,
             Eigen::MatrixXd& Hf_block);
+        
+        void calcResJacobianSingleLandmarkMono(const std::shared_ptr<FeatureInfo> feature_info,
+                                               const std::shared_ptr<State> state,
+                                               Eigen::Vector2d& res,
+                                               Eigen::Matrix<double, 2, 6>& H_fj_pose,
+                                               Eigen::Matrix<double, 2, 6>& H_fj_anch,
+                                               Eigen::Matrix<double, 2, 3>& H_fj_pf);
         
         void generateSwVarOrder(const std::shared_ptr<State> state,
                                 std::vector<std::shared_ptr<SE3>>& sw_var_order,
