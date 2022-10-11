@@ -106,7 +106,8 @@ namespace ingvio
             
             H_block.block(0, sw_index_map.at(anchor_pose_ptr), H_block.rows(), 6) = H_anchor_block;
             
-            if (!testChiSquared(state, res_block, H_block, sw_var_type, this->_noise))
+            if (!testChiSquared(state, res_block, H_block, sw_var_type, 
+                this->_noise, selected_timestamps.size()-1))
             {
                 if (flag)
                 {
@@ -280,7 +281,8 @@ namespace ingvio
             
             H_block.block(0, sw_index_map.at(anchor_pose_ptr), H_block.rows(), 6) = H_anchor_block;
             
-            if (!testChiSquared(state, res_block, H_block, sw_var_type, this->_noise))
+            if (!testChiSquared(state, res_block, H_block, sw_var_type, 
+                this->_noise, selected_timestamps.size()-1))
             {
                 if (flag)
                 {
@@ -518,12 +520,16 @@ namespace ingvio
             H_proj(1, 2) = -pf_cm.y()/std::pow(pf_cm.z(), 2);
             
             Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
-            
             Eigen::Matrix<double, 3, 6> H_pf2anchor = Eigen::Matrix<double, 3, 6>::Zero();
-            H_pf2anchor.block<3, 3>(0, 0) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
             
+            if (pose_obs_ptr != pose_anchor_ptr)
+            {
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
+            
+                H_pf2anchor.block<3, 3>(0, 0) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
+            }
+            
+            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
             Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
             
             if (H_proj.hasNaN() || H_pf2x.hasNaN()) 
@@ -607,15 +613,6 @@ namespace ingvio
             H_proj(1, 1) = 1.0/pf_cm.z();
             H_proj(1, 2) = -pf_cm.y()/std::pow(pf_cm.z(), 2);
             
-            Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
-            
-            Eigen::Matrix<double, 3, 6> H_pf2anchor = Eigen::Matrix<double, 3, 6>::Zero();
-            H_pf2anchor.block<3, 3>(0, 0) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
-            
-            Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
-            
             const Eigen::Vector3d pf_cm_r = T_cl2cr*pf_cm;
             
             Eigen::Matrix<double, 2, 3> H_proj_r = Eigen::Matrix<double, 2, 3>::Zero();
@@ -624,9 +621,22 @@ namespace ingvio
             H_proj_r(1, 1) = 1.0/pf_cm_r.z();
             H_proj_r(1, 2) = -pf_cm_r.y()/std::pow(pf_cm_r.z(), 2);
             
+            Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
+            Eigen::Matrix<double, 3, 6> H_pf2anchor = Eigen::Matrix<double, 3, 6>::Zero();
+            
+            if (pose_obs_ptr != pose_anchor_ptr)
+            {
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
+            
+                H_pf2anchor.block<3, 3>(0, 0) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
+            }
+            
+            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
+            Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
+            
             Eigen::MatrixXd H_pf2x_r = R_cl2cr*H_pf2x;
             Eigen::Matrix<double, 3, 6> H_pf2anchor_r = R_cl2cr*H_pf2anchor;
-            Eigen::MatrixXd H_pf2pf_r = R_cl2cr*H_pf2x;
+            Eigen::MatrixXd H_pf2pf_r = R_cl2cr*H_pf2pf;
             
             if (H_proj.hasNaN() || H_pf2x.hasNaN()) 
                 continue;

@@ -32,6 +32,7 @@ namespace ingvio
         std::string _imu_topic;
         
         int _max_sw_clones;
+        int _is_key_frame;
         int _max_lm_feats;
         int _enable_gnss;
         

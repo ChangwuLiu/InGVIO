@@ -197,6 +197,7 @@ namespace ingvio
             if (curr_pose == anchored_pose_ptr)
             {
                 std::cout << "[LandmarkUpdate]: Warning! Current pose is the same as anchored pose!" << std::endl;
+                
                 continue;
             }
             
@@ -385,7 +386,7 @@ namespace ingvio
             
             if (!StateManager::addVariableDelayed(state, map_server->at(id)->_landmark,
                                                   sw_var_type, Hx_block, Hf_block, res_block,
-                                                  50.0*this->_noise, 0.95, true))
+                                                  this->_noise, 0.95, true))
                 continue;
             
             if (state->_anchored_landmarks.find(id) != state->_anchored_landmarks.end())
@@ -445,10 +446,14 @@ namespace ingvio
             H_proj(1, 2) = -pf_cm.y()/std::pow(pf_cm.z(), 2);
             
             Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
             
+            if (pose_obs_ptr != pose_anchor_ptr)
+            {
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
+            }
+            
+            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
             Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
             
             if (H_proj.hasNaN() || H_pf2x.hasNaN()) 
@@ -579,13 +584,16 @@ namespace ingvio
         H_proj(1, 2) = -pf_cl.y()/std::pow(pf_cl.z(), 2);
         
         H_fj_pose.setZero();
-        H_fj_pose.block<2, 3>(0, 0) = H_proj*R_cm_T*skew(pf_w);
-        H_fj_pose.block<2, 3>(0, 3) = -H_proj*R_cm_T;
-        
         H_fj_anch.setZero();
-        H_fj_anch.block<2, 3>(0, 0) = -H_fj_pose.block<2, 3>(0, 0);
         
-        H_fj_pf = H_proj*R_cm_T;
+        if (state->_sw_camleft_poses.at(curr_time) != feature_info->_landmark->getAnchoredPose())
+        {
+            H_fj_pose.block<2, 3>(0, 0) = H_proj*R_cm_T*skew(pf_w);
+            H_fj_anch.block<2, 3>(0, 0) = -H_fj_pose.block<2, 3>(0, 0);
+        }
+        
+        H_fj_pose.block<2, 3>(0, 3) = -H_proj*R_cm_T;
+        H_fj_pf = -H_fj_pose.block<2, 3>(0, 3);
     }
     
     void LandmarkUpdate::calcResJacobianSingleLandmarkStereo(
@@ -823,8 +831,14 @@ namespace ingvio
             H_proj_r(1, 2) = -pf_cm_r.y()/std::pow(pf_cm_r.z(), 2);
             
             Eigen::MatrixXd H_pf2x = Eigen::MatrixXd::Zero(3, num_of_cols);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
-            H_pf2x.block<3, 3>(0, sw_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
+            
+            if (pose_anchor_ptr != pose_obs_ptr)
+            {
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)) = R_cm2w.transpose()*skew(pf_w);
+                
+                H_pf2x.block<3, 3>(0, sw_index_map.at(pose_anchor_ptr)) = -H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr));
+            }
+            
             H_pf2x.block<3, 3>(0, sw_index_map.at(pose_obs_ptr)+3) = -R_cm2w.transpose();
             
             Eigen::Matrix3d H_pf2pf = R_cm2w.transpose();
@@ -857,13 +871,15 @@ namespace ingvio
     
     void LandmarkUpdate::initNewLandmarkStereo(std::shared_ptr<State> state,
                                                std::shared_ptr<MapServer> map_server,
-                                               std::shared_ptr<Triangulator> tri)
+                                               std::shared_ptr<Triangulator> tri,
+                                               int min_init_poses)
     {
-        double marg_time = state->nextMargTime();
+        if (state->_sw_camleft_poses.size() < min_init_poses)
+            return;
         
         const int vac_num_lm = state->_state_params._max_landmarks - state->_anchored_landmarks.size();
         
-        if (marg_time == INFINITY || vac_num_lm <= 0) return;
+        if (vac_num_lm <= 0) return;
         
         std::vector<int> ids_to_init;
         
@@ -871,7 +887,7 @@ namespace ingvio
         {
             if (ids_to_init.size() >= vac_num_lm) break;
             
-            if (item.second->_stereo_obs.find(marg_time) == item.second->_stereo_obs.end() || 
+            if (item.second->_stereo_obs.size() < min_init_poses || 
                 item.second->_ftype == FeatureInfo::FeatureType::SLAM)
                 continue;
             

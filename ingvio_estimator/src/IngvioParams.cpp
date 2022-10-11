@@ -35,7 +35,7 @@ namespace ingvio
         _max_sw_clones = fs["max_sliding_window_poses"];
         
         _max_lm_feats = fs["max_landmark_features"];
-        
+        _is_key_frame = fs["is_key_frame"];
         _enable_gnss = fs["enable_gnss"];
         
         _noise_g = fs["noise_gyro"];
@@ -164,6 +164,8 @@ namespace ingvio
         std::cout << "imu_topic: " << _imu_topic << std::endl;
         
         std::cout << "max_sliding_window_poses: " << _max_sw_clones << std::endl;
+        
+        std::cout << "is_key_frame: " << _is_key_frame << std::endl;
         
         std::cout << "max_landmark_features: " << _max_lm_feats << std::endl;
         

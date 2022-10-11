@@ -48,9 +48,11 @@ namespace ingvio
         void updateLandmarkStereo(std::shared_ptr<State> state,
                                   std::shared_ptr<MapServer> map_server);
         
+        
         void initNewLandmarkStereo(std::shared_ptr<State> state,
                                    std::shared_ptr<MapServer> map_server,
-                                   std::shared_ptr<Triangulator> tri);
+                                   std::shared_ptr<Triangulator> tri,
+                                   int min_init_poses);
         
     protected:
         

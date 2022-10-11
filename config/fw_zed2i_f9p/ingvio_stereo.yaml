@@ -8,25 +8,26 @@ cam_nums: 2
 cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/fw_zed2i_f9p/stereo_left_config.yaml"
 cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/fw_zed2i_f9p/stereo_right_config.yaml"
 
-max_sliding_window_poses: 21
-max_landmark_features: 10
+max_sliding_window_poses: 27
+is_key_frame: 1
+max_landmark_features: 0
 
 enable_gnss: 1
 
 noise_gyro: 0.005
 noise_accel: 0.05
-noise_bias_gyro: 0.001
-noise_bias_accel: 0.01
+noise_bias_gyro: 0.0005
+noise_bias_accel: 0.005
 noise_rcv_clockbias: 2.0
 noise_rcv_clockbias_randomwalk: 0.2
 
-init_cov_rot: 0.05
-init_cov_pos: 0.1
-init_cov_vel: 0.5
+init_cov_rot: 0.0
+init_cov_pos: 0.0
+init_cov_vel: 0.25
 init_cov_bg: 0.01
-init_cov_ba: 0.08
-init_cov_ext_rot: 8e-03
-init_cov_ext_pos: 5e-04
+init_cov_ba: 0.01
+init_cov_ext_rot: 1.8e-02
+init_cov_ext_pos: 2e-03
 init_cov_rcv_clockbias: 2.0
 init_cov_rcv_clockbias_randomwalk: 1.0
 init_cov_yof: 0.015
@@ -35,13 +36,13 @@ gravity_norm: 9.8
 max_imu_buffer_size: 10000
 init_imu_buffer_sp: 10
 
-trans_thres: 0.08
+trans_thres: 0.25
 huber_epsilon: 0.01
-conv_precision: 5e-07
+conv_precision: 5e-08
 init_damping: 1e-03
 outer_loop_max_iter: 10
 inner_loop_max_iter: 10
-max_depth: 60.0
+max_depth: 80.0
 min_depth: 0.2
 max_baseline_ratio: 80.0
 

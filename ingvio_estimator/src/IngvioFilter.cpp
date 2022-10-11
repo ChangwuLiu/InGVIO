@@ -125,32 +125,54 @@ namespace ingvio
         
         _remove_lost_update->updateStateMono(_state, _map_server, _tri);
         
-        // _sw_marg_update->updateStateMono(_state, _map_server, _tri);
-        
-        _keyframe_update->updateStateMono(_state, _map_server, _tri);
-        
-        // _landmark_update->updateLandmarkMonoSw(_state, _map_server);
-        
-        // _landmark_update->initNewLandmarkMono(_state, _map_server, 
-        //                                      _tri, _filter_params._max_sw_clones);
-        
-        // _sw_marg_update->cleanMonoObsAtMargTime(_state, _map_server);
-        
-        _keyframe_update->cleanMonoObsAtMargTime(_state, _map_server);
-        
-        // _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
-        
-        _keyframe_update->changeMSCKFAnchor(_state, _map_server);
-        
-        // std::vector<double> marg_kfs;
-        // _keyframe_update->getMargKfs(_state, marg_kfs);
-        
-        // _landmark_update->changeLandmarkAnchor(_state, _map_server, marg_kfs);
-        
-        // _sw_marg_update->margSwPose(_state);
-        
-        _keyframe_update->margSwPose(_state);
-        
+        if (_filter_params._is_key_frame)
+        {
+            _keyframe_update->updateStateMono(_state, _map_server, _tri);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                _landmark_update->updateLandmarkMono(_state, _map_server);
+                
+                _landmark_update->initNewLandmarkMono(_state, _map_server, 
+                                                      _tri, _filter_params._max_sw_clones);
+            }
+            
+            _keyframe_update->cleanMonoObsAtMargTime(_state, _map_server);
+            
+            _keyframe_update->changeMSCKFAnchor(_state, _map_server);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                std::vector<double> marg_kfs;
+                _keyframe_update->getMargKfs(_state, marg_kfs);
+                
+                _landmark_update->changeLandmarkAnchor(_state, _map_server, marg_kfs);
+            }
+            
+            _keyframe_update->margSwPose(_state);
+        }
+        else
+        {
+            _sw_marg_update->updateStateMono(_state, _map_server, _tri);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                _landmark_update->updateLandmarkMono(_state, _map_server);
+                
+                _landmark_update->initNewLandmarkMono(_state, _map_server, 
+                                                      _tri, _filter_params._max_sw_clones);
+            }
+            
+            _sw_marg_update->cleanMonoObsAtMargTime(_state, _map_server);
+            
+            _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
+            
+            if (_filter_params._max_lm_feats > 0)
+                _landmark_update->changeLandmarkAnchor(_state, _map_server);
+            
+            _sw_marg_update->margSwPose(_state);
+        }
+
         MapServerManager::eraseInvalidFeatures(_map_server, _state);
         
         if (_filter_params._enable_gnss)
@@ -225,28 +247,54 @@ namespace ingvio
         
         _remove_lost_update->updateStateStereo(_state, _map_server, _tri);
         
-        // _sw_marg_update->updateStateStereo(_state, _map_server, _tri);
-        
-        _keyframe_update->updateStateStereo(_state, _map_server, _tri);
-        
-        // _landmark_update->updateLandmarkStereo(_state, _map_server);
-        
-        // _landmark_update->initNewLandmarkStereo(_state, _map_server, _tri);
-        
-        // _sw_marg_update->cleanStereoObsAtMargTime(_state, _map_server);
-        
-        _keyframe_update->cleanStereoObsAtMargTime(_state, _map_server);
-        
-        // _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
-        
-        _keyframe_update->changeMSCKFAnchor(_state, _map_server);
-        
-        // _landmark_update->changeLandmarkAnchor(_state, _map_server);
-        
-        // _sw_marg_update->margSwPose(_state);
-        
-        _keyframe_update->margSwPose(_state);
-        
+        if (_filter_params._is_key_frame)
+        {
+            _keyframe_update->updateStateStereo(_state, _map_server, _tri);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                _landmark_update->updateLandmarkStereo(_state, _map_server);
+                
+                _landmark_update->initNewLandmarkStereo(_state, _map_server, 
+                                                      _tri, _filter_params._max_sw_clones);
+            }
+            
+            _keyframe_update->cleanStereoObsAtMargTime(_state, _map_server);
+            
+            _keyframe_update->changeMSCKFAnchor(_state, _map_server);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                std::vector<double> marg_kfs;
+                _keyframe_update->getMargKfs(_state, marg_kfs);
+                
+                _landmark_update->changeLandmarkAnchor(_state, _map_server, marg_kfs);
+            }
+            
+            _keyframe_update->margSwPose(_state);
+        }
+        else
+        {
+            _sw_marg_update->updateStateStereo(_state, _map_server, _tri);
+            
+            if (_filter_params._max_lm_feats > 0)
+            {
+                _landmark_update->updateLandmarkStereo(_state, _map_server);
+                
+                _landmark_update->initNewLandmarkStereo(_state, _map_server, 
+                                                        _tri, _filter_params._max_sw_clones);
+            }
+            
+            _sw_marg_update->cleanStereoObsAtMargTime(_state, _map_server);
+            
+            _sw_marg_update->changeMSCKFAnchor(_state, _map_server);
+            
+            if (_filter_params._max_lm_feats > 0)
+                _landmark_update->changeLandmarkAnchor(_state, _map_server);
+            
+            _sw_marg_update->margSwPose(_state);
+        }
+                
         MapServerManager::eraseInvalidFeatures(_map_server, _state);
         
         if (_filter_params._enable_gnss)

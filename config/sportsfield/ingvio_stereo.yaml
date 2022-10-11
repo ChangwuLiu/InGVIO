@@ -8,17 +8,18 @@ cam_nums: 2
 cam_left_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_left_config.yaml"
 cam_right_file_path: "/home/lcw/VIO/ws_ingvio/src/config/sportsfield/stereo_right_config.yaml"
 
-max_sliding_window_poses: 25
+max_sliding_window_poses: 27
+is_key_frame: 1
 max_landmark_features: 0
 
 enable_gnss: 0
 
-noise_gyro: 0.005
-noise_accel: 0.05
-noise_bias_gyro: 0.001
-noise_bias_accel: 0.01
-noise_rcv_clockbias: 0.1
-noise_rcv_clockbias_randomwalk: 0.05
+noise_gyro: 0.004
+noise_accel: 0.08
+noise_bias_gyro: 0.0002
+noise_bias_accel: 0.008
+noise_rcv_clockbias: 2.0
+noise_rcv_clockbias_randomwalk: 0.2
 
 init_cov_rot: 0.0
 init_cov_pos: 0.0
@@ -41,13 +42,13 @@ conv_precision: 5e-07
 init_damping: 1e-03
 outer_loop_max_iter: 10
 inner_loop_max_iter: 10
-max_depth: 60.0
+max_depth: 40.0
 min_depth: 0.2
 max_baseline_ratio: 80.0
 
 chi2_max_dof: 150
 chi2_thres: 0.95
-visual_noise: 0.18
+visual_noise: 0.035
 frame_select_interval: 18
 
 gnss_ephem_topic: "/ublox_driver/ephem"

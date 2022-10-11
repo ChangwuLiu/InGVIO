@@ -38,7 +38,7 @@ extrinsicTranslation: !!opencv-matrix     # t^{imu}_{cam}
 
 # feature tracker parameters
 max_cnt: 110        # max feature number in feature tracking
-min_dist: 45        # min distance between two features 
+min_dist: 30        # min distance between two features 
 freq: 0             # freq (Hz) of publishing tracking result. At least 10Hz for good
                     # estimation. If set 0, the frequence will be the same as raw image 
 F_threshold: 1.0    # ransac threshold (pixel)
