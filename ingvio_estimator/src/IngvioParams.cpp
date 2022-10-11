@@ -99,6 +99,10 @@ namespace ingvio
             _gv_align_max_iter = fs["gv_align_max_iter"];
             _gv_align_conv_epsilon = fs["gv_align_conv_epsilon"];
             _gv_align_vel_thres = fs["gv_align_vel_thres"];
+            
+            _psr_noise_amp = fs["psr_noise_amp"];
+            _dopp_noise_amp = fs["dopp_noise_amp"];
+            _is_adjust_yof = fs["is_adjust_yof"];
         }
         
         
@@ -269,6 +273,12 @@ namespace ingvio
             std::cout << "gv_align_conv_epsilon: " << _gv_align_conv_epsilon << std::endl;
         
             std::cout << "gv_align_vel_thres: " << _gv_align_vel_thres << std::endl;
+            
+            std::cout << "psr_noise_amp: " << _psr_noise_amp << std::endl;
+            
+            std::cout << "dopp_noise_amp: " << _dopp_noise_amp << std::endl;
+            
+            std::cout << "is_adjust_yof: " << _is_adjust_yof << std::endl;
         }
         
         std::cout << "===============================" << std::endl;

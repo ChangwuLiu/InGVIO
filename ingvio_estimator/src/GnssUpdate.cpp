@@ -142,7 +142,10 @@ namespace ingvio
             H_i.block<1, 3>(0, 0) = unit_rv2sv.transpose()*Rw2ecef*skew(state->_extended_pose->valueTrans1());
             H_i.block<1, 3>(0, 3) = -unit_rv2sv.transpose()*Rw2ecef;
             
-            H_i(0, 9) = -unit_rv2sv.transpose()*gvio_aligner->getRenu2ecef()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans1();
+            if (_is_adjust_yof)
+            {
+                H_i(0, 9) = -unit_rv2sv.transpose()*gvio_aligner->getRenu2ecef()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans1();
+            }
             
             H_i(0, 10) = 1.0;
             
@@ -162,7 +165,7 @@ namespace ingvio
             double sin_el = std::sin(all_sv_azel[i].y());
             if (std::fabs(sin_el) < 1e-6) sin_el = 1e-6;
             
-            double psr_noise = std::pow(ns*npr/(sin_el*sin_el), 0.5);
+            double psr_noise = _psr_noise_amp*std::pow(ns*npr/(sin_el*sin_el), 0.5);
             
             /*
             if (!testChiSquared(state, res_i, H_i, sub_order, psr_noise))
@@ -214,7 +217,10 @@ namespace ingvio
             H_i.block<1, 3>(0, 0) = unit_rv2sv.transpose()*Rw2ecef*skew(state->_extended_pose->valueTrans2());
             H_i.block<1, 3>(0, 6) = -unit_rv2sv.transpose()*Rw2ecef;
             
-            H_i(0, 9) = -unit_rv2sv.transpose()*gvio_aligner->getRenu2ecef()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans2();
+            if (_is_adjust_yof)
+            {
+                H_i(0, 9) = -unit_rv2sv.transpose()*gvio_aligner->getRenu2ecef()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans2();
+            }
             
             H_i(0, 10) = 1.0;
             
@@ -228,7 +234,7 @@ namespace ingvio
             double sin_el = std::sin(all_sv_azel[i].y());
             if (std::fabs(sin_el) < 1e-6) sin_el = 1e-6;
             
-            double dopp_noise = std::pow(ns*ndp/(sin_el*sin_el), 0.5);
+            double dopp_noise = _dopp_noise_amp*std::pow(ns*ndp/(sin_el*sin_el), 0.5);
             
             /*
             if (!testChiSquared(state, res_i, H_i, sub_order, dopp_noise))
@@ -369,7 +375,10 @@ namespace ingvio
                 
                 Hx.block(0, 6, Hx.rows(), 3) = -batch_unit_rv2sv_T*Rw2ecef;
                 
-                Hx.block(0, 9, Hx.rows(), 1) = -batch_unit_rv2sv_T*gvio_aligner->getRecef2enu()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans2();
+                if (_is_adjust_yof)
+                {
+                    Hx.block(0, 9, Hx.rows(), 1) = -batch_unit_rv2sv_T*gvio_aligner->getRecef2enu()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans2();
+                }
                 
                 std::vector<std::shared_ptr<Type>> x_order(2);
                 x_order[0] = state->_extended_pose;
@@ -393,10 +402,10 @@ namespace ingvio
                 }
                 
                 avg_noise /= gnss_meas.second.size();
-                avg_noise = std::sqrt(avg_noise);
+                avg_noise = _dopp_noise_amp*std::sqrt(avg_noise);
                 
                 if (!StateManager::addVariableDelayed(state, fs, x_order, Hx, Hf, res,
-                    15.0*avg_noise, 0.95, true))
+                    avg_noise, 0.95, true))
                     continue;
                 
                 state->_gnss[State::GNSSType::FS] = fs;
@@ -410,6 +419,8 @@ namespace ingvio
                 this->getResJacobianOfSys(gtype, gnss_meas, all_sv_azel,
                                           res_pos, J_pos_ecef,
                                           res, batch_unit_rv2sv_T, avg_noise);
+                
+                avg_noise *= _psr_noise_amp;
                 
                 Eigen::MatrixXd Hf(res.rows(), 1);
                 Hf.setOnes();
@@ -425,13 +436,16 @@ namespace ingvio
                 
                 Hx.block(0, 3, Hx.rows(), 3) = -batch_unit_rv2sv_T*Rw2ecef;
                 
-                Hx.block(0, 9, Hx.rows(), 1) = -batch_unit_rv2sv_T*gvio_aligner->getRecef2enu()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans1();
+                if (_is_adjust_yof)
+                {
+                    Hx.block(0, 9, Hx.rows(), 1) = -batch_unit_rv2sv_T*gvio_aligner->getRecef2enu()*GnssManager::dotRw2enu(state)*state->_extended_pose->valueTrans1();
+                }
                 
                 std::shared_ptr<Scalar> cb = std::make_shared<Scalar>();
                 cb->setValue(spp_meas.posSpp(3+gnss_comm::sys2idx.at(GnssManager::gnsstype_to_satsys.at(gtype)), 0));
                 
                 if (!StateManager::addVariableDelayed(state, cb, x_order, Hx, Hf, res,
-                    15.0*avg_noise, 0.95, true))
+                    avg_noise, 0.95, true))
                     continue;
                 
                 state->_gnss[gtype] = cb;

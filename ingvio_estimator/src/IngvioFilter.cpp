@@ -76,7 +76,7 @@ namespace ingvio
         
         _gvio_aligner = std::make_shared<GvioAligner>(_filter_params);
         
-        _gnss_update = std::make_shared<GnssUpdate>();
+        _gnss_update = std::make_shared<GnssUpdate>(_filter_params);
         
         if (_filter_params._enable_gnss)
         {

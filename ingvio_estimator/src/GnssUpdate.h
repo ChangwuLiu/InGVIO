@@ -6,6 +6,8 @@
 #include "State.h"
 #include "Update.h"
 
+#include "IngvioParams.h"
+
 #include "GnssSync.h"
 
 namespace ingvio
@@ -17,6 +19,13 @@ namespace ingvio
     {
     public:
         using UpdateBase::UpdateBase;
+        
+        GnssUpdate(const IngvioParams& filter_params) :
+        UpdateBase(filter_params._chi2_max_dof, filter_params._chi2_thres),
+        _psr_noise_amp(filter_params._psr_noise_amp),
+        _dopp_noise_amp(filter_params._dopp_noise_amp),
+        _is_adjust_yof(filter_params._is_adjust_yof)
+        {}
      
         virtual ~GnssUpdate() {}
         
@@ -42,6 +51,12 @@ namespace ingvio
                               const std::vector<double>& iono_params);
         
     protected:
+        
+        double _psr_noise_amp = 1.0;
+        
+        double _dopp_noise_amp = 1.0;
+        
+        int _is_adjust_yof = 0;
         
         void getSysInGnssMeas(const GnssMeas& gnss_meas);
         

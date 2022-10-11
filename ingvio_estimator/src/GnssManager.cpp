@@ -81,7 +81,6 @@ namespace ingvio
     
     Eigen::Matrix3d GnssManager::dotRw2enu(const std::shared_ptr<State> state)
     {
-        /*
         if (state->_gnss.find(State::GNSSType::YOF) == state->_gnss.end())
             return Eigen::Matrix3d::Zero();
         
@@ -93,8 +92,6 @@ namespace ingvio
                             0.0,           0.0, 0.0;
                             
         return result;
-        */
-        return Eigen::Matrix3d::Zero();
     }
     
     Eigen::Matrix3d GnssManager::calcRw2enu(const std::shared_ptr<State> state)

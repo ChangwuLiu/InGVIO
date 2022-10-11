@@ -93,6 +93,10 @@ namespace ingvio
         double _gv_align_conv_epsilon;
         double _gv_align_vel_thres;
         
+        double _psr_noise_amp;
+        double _dopp_noise_amp;
+        int _is_adjust_yof;
+        
         void readParams(ros::NodeHandle& nh);
         void readParams(const std::string& config_path);
         
