@@ -59,6 +59,7 @@ namespace ingvio
         
         ros::Subscriber _sub_ephem, _sub_glo_ephem, _sub_gnss_meas, _sub_iono_params, _sub_rtk_gt;
         
+        ros::Publisher _odom_spp_pub, _odom_gt_pub;
         ros::Publisher _path_spp_pub, _path_gt_pub;
         
         nav_msgs::Path _path_w_msg, _path_spp_msg, _path_gt_msg;

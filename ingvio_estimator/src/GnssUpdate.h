@@ -24,7 +24,8 @@ namespace ingvio
         UpdateBase(filter_params._chi2_max_dof, filter_params._chi2_thres),
         _psr_noise_amp(filter_params._psr_noise_amp),
         _dopp_noise_amp(filter_params._dopp_noise_amp),
-        _is_adjust_yof(filter_params._is_adjust_yof)
+        _is_adjust_yof(filter_params._is_adjust_yof),
+        _is_gnss_chi2_test(filter_params._is_gnss_chi2_test)
         {}
      
         virtual ~GnssUpdate() {}
@@ -57,6 +58,8 @@ namespace ingvio
         double _dopp_noise_amp = 1.0;
         
         int _is_adjust_yof = 0;
+        
+        int _is_gnss_chi2_test = 0;
         
         void getSysInGnssMeas(const GnssMeas& gnss_meas);
         

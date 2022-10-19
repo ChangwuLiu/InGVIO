@@ -3,6 +3,9 @@
 
 #include "IngvioFilter.h"
 
+#include <nav_msgs/Odometry.h>
+#include <eigen_conversions/eigen_msg.h>
+
 #include "GnssData.h"
 #include "GnssSync.h"
 #include "GvioAligner.h"
@@ -27,6 +30,9 @@ namespace ingvio
             
             Eigen::Vector3d gt_w = _gvio_aligner->getTecef2w()*gt_ecef;
             
+            if (gt_w.hasNaN())
+                return;
+            
             geometry_msgs::PoseStamped pose_gt;
             pose_gt.header.stamp = ros::Time().fromSec(nav_sat_msg->header.stamp.toSec() + _gnss_sync->getUnsyncTime());
             pose_gt.header.frame_id = "world";
@@ -42,6 +48,19 @@ namespace ingvio
             _path_gt_msg.header.frame_id = "world";
             _path_gt_msg.poses.push_back(pose_gt);
             _path_gt_pub.publish(_path_gt_msg);
+            
+            Eigen::Isometry3d T_i2w = Eigen::Isometry3d::Identity();
+            T_i2w.translation() = gt_w;
+            
+            nav_msgs::Odometry odom_gt_msg;
+            odom_gt_msg.header.stamp = pose_gt.header.stamp;
+            odom_gt_msg.header.frame_id = "world";
+            odom_gt_msg.child_frame_id = "gt";
+            
+            tf::poseEigenToMsg(T_i2w, odom_gt_msg.pose.pose);
+            tf::vectorEigenToMsg(Eigen::Vector3d::Zero(), odom_gt_msg.twist.twist.linear);
+            
+            _odom_gt_pub.publish(odom_gt_msg);
         }
     }
     

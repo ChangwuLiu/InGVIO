@@ -87,6 +87,7 @@ namespace ingvio
         
         int _use_fix_time_offset;
         double _gnss_local_offset;
+        int _is_gnss_chi2_test;
         
         int _gv_align_batch_size;
         int _gv_align_max_iter;

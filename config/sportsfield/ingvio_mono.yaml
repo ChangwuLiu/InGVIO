@@ -11,7 +11,7 @@ max_sliding_window_poses: 35
 is_key_frame: 1
 max_landmark_features: 0
 
-enable_gnss: 1
+enable_gnss: 0
 
 noise_gyro: 0.004
 noise_accel: 0.08
@@ -32,7 +32,7 @@ init_cov_rcv_clockbias_randomwalk: 1.0
 init_cov_yof: 0.015
 
 gravity_norm: 9.8
-max_imu_buffer_size: 1000
+max_imu_buffer_size: 3000
 init_imu_buffer_sp: 300
 
 trans_thres: 0.25
@@ -47,7 +47,7 @@ max_baseline_ratio: 80.0
 
 chi2_max_dof: 150
 chi2_thres: 0.95
-visual_noise: 0.08
+visual_noise: 0.035
 frame_select_interval: 28
 
 gnss_ephem_topic: "/ublox_driver/ephem"
@@ -61,8 +61,9 @@ gnss_psr_std_thres: 8.0
 gnss_dopp_std_thres: 8.0
 gnss_track_num_thres: 20
 
-use_fix_time_offset: 0
+use_fix_time_offset: 1
 gnss_local_offset: -18.0
+gnss_chi2_test: 0
 
 gv_align_batch_size: 45
 gv_align_max_iter: 10

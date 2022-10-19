@@ -167,10 +167,10 @@ namespace ingvio
             
             double psr_noise = _psr_noise_amp*std::pow(ns*npr/(sin_el*sin_el), 0.5);
             
-            /*
-            if (!testChiSquared(state, res_i, H_i, sub_order, psr_noise))
+ 
+            if (_is_gnss_chi2_test && !testChiSquared(state, res_i, H_i, sub_order, psr_noise))
                 continue;
-            */
+            
             
             res(row_cnt, 0) = res_i(0);
             R(row_cnt, row_cnt) = psr_noise*psr_noise;
@@ -236,10 +236,10 @@ namespace ingvio
             
             double dopp_noise = _dopp_noise_amp*std::pow(ns*ndp/(sin_el*sin_el), 0.5);
             
-            /*
-            if (!testChiSquared(state, res_i, H_i, sub_order, dopp_noise))
+
+            if (_is_gnss_chi2_test && !testChiSquared(state, res_i, H_i, sub_order, dopp_noise))
                 continue;
-            */
+            
             
             res(row_cnt, 0) = res_i(0);
             R(row_cnt, row_cnt) = dopp_noise*dopp_noise;

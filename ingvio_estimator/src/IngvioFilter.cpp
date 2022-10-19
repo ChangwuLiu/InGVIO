@@ -90,7 +90,11 @@ namespace ingvio
             
             _sub_rtk_gt = _nh.subscribe(_filter_params._rtk_gt_topic, 50, &IngvioFilter::callbackRtkGroundTruth, this);
             
+            _odom_spp_pub = _nh.advertise<nav_msgs::Odometry>("pose_spp", 5);
+            
             _path_spp_pub = _nh.advertise<nav_msgs::Path>("path_spp", 1);
+      
+            _odom_gt_pub = _nh.advertise<nav_msgs::Odometry>("pose_gt", 5);
             
             _path_gt_pub = _nh.advertise<nav_msgs::Path>("path_gt", 1);
         }
@@ -214,10 +218,16 @@ namespace ingvio
         
         double time_mono = timer_mono.toc();
         
+        static double total_time = 0.0;
+        static int total_cnt = 0;
+        
+        ++total_cnt;
+        total_time += time_mono;
+        
         if (time_mono < 50.0)
-            std::cout << color::setGreen << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << color::resetColor << std::endl;
+            std::cout << color::setGreen << "[IngvioFilter]: One loop mono callback: " << total_time/total_cnt << " (ms) " << color::resetColor << std::endl;
         else
-            std::cout << color::setRed << "[IngvioFilter]: One loop mono callback: " << timer_mono.toc() << " (ms) " << color::resetColor << std::endl;
+            std::cout << color::setRed << "[IngvioFilter]: One loop mono callback: " << total_time/total_cnt << " (ms) " << color::resetColor << std::endl;
     }
     
     void IngvioFilter::callbackStereoFrame(const feature_tracker::StereoFrameConstPtr& stereo_frame_ptr)
@@ -336,10 +346,16 @@ namespace ingvio
         
         double time_stereo = timer_stereo.toc();
         
+        static double total_time = 0.0;
+        static int total_cnt = 0;
+        
+        ++total_cnt;
+        total_time += time_stereo;
+        
         if (time_stereo < 50.0)
-            std::cout << color::setGreen << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << color::resetColor << std::endl;
+            std::cout << color::setGreen << "[IngvioFilter]: One loop stereo callback: " << total_time/total_cnt << " (ms) " << color::resetColor << std::endl;
         else
-            std::cout << color::setRed << "[IngvioFilter]: One loop stereo callback: " << timer_stereo.toc() << " (ms) " << color::resetColor << std::endl;
+            std::cout << color::setRed << "[IngvioFilter]: One loop stereo callback: " << total_time/total_cnt << " (ms) " << color::resetColor << std::endl;
         
     }
     
@@ -427,7 +443,7 @@ namespace ingvio
         
         if (pos_spp_w.hasNaN())
             return;
-        
+    
         geometry_msgs::PoseStamped pose_spp;
         pose_spp.header.stamp = header.stamp;
         pose_spp.header.frame_id = "world";
@@ -443,5 +459,22 @@ namespace ingvio
         _path_spp_msg.header.frame_id = "world";
         _path_spp_msg.poses.push_back(pose_spp);
         _path_spp_pub.publish(_path_spp_msg);
+        
+        Eigen::Isometry3d T_i2w = Eigen::Isometry3d::Identity();
+        T_i2w.translation() = pos_spp_w;
+        
+        Eigen::Vector3d vel_spp_w = _gvio_aligner->getRecef2enu()*spp_meas.velSpp.block<3, 1>(0, 0);
+        if (vel_spp_w.hasNaN())
+            return;
+        
+        nav_msgs::Odometry odom_spp_msg;
+        odom_spp_msg.header.stamp = header.stamp;
+        odom_spp_msg.header.frame_id = "world";
+        odom_spp_msg.child_frame_id = "spp";
+        
+        tf::poseEigenToMsg(T_i2w, odom_spp_msg.pose.pose);
+        tf::vectorEigenToMsg(vel_spp_w, odom_spp_msg.twist.twist.linear);
+        
+        _odom_spp_pub.publish(odom_spp_msg);
     }
 }
