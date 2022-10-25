@@ -1,3 +1,23 @@
+/**  This File is part of InGVIO, an invariant filter for mono/stereo visual-
+ *    inertial-raw GNSS navigation. 
+ *    
+ *    Copyright (C) 2022  Changwu Liu (cwliu529@163.com,
+ *                                     lcw18@mails.tsinghua.edu.cn (valid until 2023))
+ *    
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *    
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *    
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <Eigen/Core>
@@ -57,6 +77,10 @@ namespace ingvio
         
         static void margAnchoredLandmarkInState(std::shared_ptr<State> state, int lm_id);
         
+        // Acknowledgements: This function is inspired by the realization of OpenVINS
+        // Delayed-Initialization
+        // See https://github.com/rpng/open_vins
+        
         static void ekfUpdate(std::shared_ptr<State> state,
                               const std::vector<std::shared_ptr<Type>>& var_order,
                               const Eigen::MatrixXd& H,
@@ -68,6 +92,10 @@ namespace ingvio
         
         static int calcSubVarSize(const std::vector<std::shared_ptr<Type>>& sub_var);
         
+        // Acknowledgements: This function is inspired by the realization of OpenVINS
+        // Delayed-Initialization
+        // See https://github.com/rpng/open_vins
+        
         static void addVariableDelayedInvertible(
             std::shared_ptr<State> state,
             std::shared_ptr<Type> var_new,
@@ -76,6 +104,10 @@ namespace ingvio
             const Eigen::MatrixXd& H_new,
             const Eigen::VectorXd& res,
             double noise_iso_meas);
+        
+        // Acknowledgements: This function is inspired by the realization of OpenVINS
+        // Delayed-Initialization
+        // See https://github.com/rpng/open_vins
         
         static bool addVariableDelayed(
             std::shared_ptr<State> state,

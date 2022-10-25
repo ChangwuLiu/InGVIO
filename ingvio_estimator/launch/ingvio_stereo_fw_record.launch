@@ -1,8 +1,8 @@
 <launch>
-    <include file = "$(find ingvio_estimator)/launch/ingvio_mono_sf.launch" />
+    <include file = "$(find ingvio_estimator)/launch/ingvio_stereo_fw.launch" />
     
-    <arg name = "is_record_gnss" default = "true" />
-    <arg name = "recorded_file" default = "/home/lcw/VIO/ingvio_dataset_tests/ingvio" />
+    <arg name = "is_record_gnss" default = "false" />
+    <arg name = "recorded_file" default = "/home/lcw/VIO/ingvio_dataset_tests/ingvio_fw" />
     
     <node pkg = "rosbag" type = "record" name = "data_record_with_gnss" args = "record -o $(arg recorded_file) /ingvio_estimator/pose_w /ingvio_estimator/pose_spp /ingvio_estimator/pose_gt" if = "$(arg is_record_gnss)" />
     

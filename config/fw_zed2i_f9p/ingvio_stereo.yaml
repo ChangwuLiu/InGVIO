@@ -62,9 +62,10 @@ gnss_psr_std_thres: 8.0
 gnss_dopp_std_thres: 8.0
 gnss_track_num_thres: 20
 
-use_fix_time_offset: 0
-gnss_local_offset: -18.0
+use_fix_time_offset: 1
+gnss_local_offset:  -970047.18
 gnss_chi2_test: 0
+gnss_strong_reject: 0
 
 gv_align_batch_size: 25
 gv_align_max_iter: 10

@@ -1,3 +1,23 @@
+/**  This File is part of InGVIO, an invariant filter for mono/stereo visual-
+ *    inertial-raw GNSS navigation. 
+ *    
+ *    Copyright (C) 2022  Changwu Liu (cwliu529@163.com,
+ *                                     lcw18@mails.tsinghua.edu.cn (valid until 2023))
+ *    
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *    
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *    
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "IngvioParams.h"
 
 #include <opencv2/core/eigen.hpp>
@@ -96,6 +116,7 @@ namespace ingvio
                 _gnss_local_offset = fs["gnss_local_offset"];
             
             _is_gnss_chi2_test = fs["gnss_chi2_test"];
+            _is_gnss_strong_reject = fs["gnss_strong_reject"];
             
             _gv_align_batch_size = fs["gv_align_batch_size"];
             _gv_align_max_iter = fs["gv_align_max_iter"];
@@ -269,6 +290,8 @@ namespace ingvio
                 std::cout << "gnss_local_offset: " << _gnss_local_offset << std::endl;
             
             std::cout << "gnss_chi2_test: " << _is_gnss_chi2_test << std::endl;
+            
+            std::cout << "gnss_strong_reject: " << _is_gnss_strong_reject << std::endl;
             
             std::cout << "gv_align_batch_size: " << _gv_align_batch_size << std::endl;
             

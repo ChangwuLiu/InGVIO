@@ -1,3 +1,23 @@
+/**  This File is part of InGVIO, an invariant filter for mono/stereo visual-
+ *    inertial-raw GNSS navigation. 
+ *    
+ *    Copyright (C) 2022  Changwu Liu (cwliu529@163.com,
+ *                                     lcw18@mails.tsinghua.edu.cn (valid until 2023))
+ *    
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *    
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *    
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <memory>
@@ -25,7 +45,8 @@ namespace ingvio
         _psr_noise_amp(filter_params._psr_noise_amp),
         _dopp_noise_amp(filter_params._dopp_noise_amp),
         _is_adjust_yof(filter_params._is_adjust_yof),
-        _is_gnss_chi2_test(filter_params._is_gnss_chi2_test)
+        _is_gnss_chi2_test(filter_params._is_gnss_chi2_test),
+        _is_gnss_strong_reject(filter_params._is_gnss_strong_reject)
         {}
      
         virtual ~GnssUpdate() {}
@@ -60,6 +81,8 @@ namespace ingvio
         int _is_adjust_yof = 0;
         
         int _is_gnss_chi2_test = 0;
+        
+        int _is_gnss_strong_reject = 0;
         
         void getSysInGnssMeas(const GnssMeas& gnss_meas);
         

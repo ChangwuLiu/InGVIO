@@ -10,7 +10,7 @@
     <author email="cwliu529@163.com">Changwu Liu</author>
     <maintainer email="cwliu529@163.com">Changwu Liu</maintainer>
     
-    <license> TODO </license>
+    <license> GPLv3 </license>
     
     <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
     <depend condition="$ROS_VERSION == 1">cmake_modules</depend>

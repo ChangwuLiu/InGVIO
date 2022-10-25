@@ -1,3 +1,23 @@
+/**  This File is part of InGVIO, an invariant filter for mono/stereo visual-
+ *    inertial-raw GNSS navigation. 
+ *    
+ *    Copyright (C) 2022  Changwu Liu (cwliu529@163.com,
+ *                                     lcw18@mails.tsinghua.edu.cn (valid until 2023))
+ *    
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *    
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *    
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <boost/math/distributions/chi_squared.hpp>
 
 #include "StateManager.h"
@@ -332,6 +352,10 @@ namespace ingvio
         assert(StateManager::checkStateContinuity(state));
     }
     
+    // Acknowledgements: This function is inspired by the realization of OpenVINS
+    // Delayed-Initialization
+    // See https://github.com/rpng/open_vins
+    
     void StateManager::ekfUpdate(std::shared_ptr<State> state,
                                  const std::vector<std::shared_ptr<Type>>& var_order,
                                  const Eigen::MatrixXd& H,
@@ -431,6 +455,10 @@ namespace ingvio
         return total_size;
     }
     
+    // Acknowledgements: This function is inspired by the realization of OpenVINS
+    // Delayed-Initialization
+    // See https://github.com/rpng/open_vins
+    
     void StateManager::addVariableDelayedInvertible(std::shared_ptr<State> state,
                                                     std::shared_ptr<Type> var_new,
                                                     const std::vector<std::shared_ptr<Type>>& var_old_order,
@@ -511,6 +539,10 @@ namespace ingvio
         
         state->_cov = 0.5*(cov_tmp + cov_tmp.transpose());
     }
+    
+    // Acknowledgements: This function is inspired by the realization of OpenVINS
+    // Delayed-Initialization
+    // See https://github.com/rpng/open_vins
     
     bool StateManager::addVariableDelayed(std::shared_ptr<State> state,
                                           std::shared_ptr<Type> var_new,
