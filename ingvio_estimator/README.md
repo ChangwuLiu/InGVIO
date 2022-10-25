@@ -26,39 +26,19 @@ The compiler should at least support c++14 standards.
 
 ### 1.2  ROS-Noetic System
 
-InGVIO is developed under 
-
-[ROS-Noetic](http://wiki.ros.org/noetic/Installation/Ubuntu)
-
- with its default OpenCV4 library. However, InGVIO should be working on ROS-Melodic with OpenCV3. In the future, we may add support to ROS 2.
+InGVIO is developed under [ROS-Noetic](http://wiki.ros.org/noetic/Installation/Ubuntu) with its default OpenCV4 library. However, InGVIO should be working on ROS-Melodic with OpenCV3. In the future, we may add support to ROS 2.
 
 ### 1.3  Eigen Library
 
-Eigen is a fantastic matrix computation library. InGVIO is developed under
-
-[Eigen3.3.7](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-
-. Other Eigen 3 versions should be OK for InGVIO.
+Eigen is a fantastic matrix computation library. InGVIO is developed under [Eigen3.3.7](https://eigen.tuxfamily.org/index.php?title=Main_Page). Other Eigen 3 versions should be OK for InGVIO.
 
 ### 1.4  SuiteSparse Library
 
-We use 
-
-[SuiteSparse](https://github.com/DrTimothyAldenDavis/SuiteSparse/releases)
-
- Library for sparse QR-decomposition in visual updates. 
+We use [SuiteSparse](https://github.com/DrTimothyAldenDavis/SuiteSparse/releases) Library for sparse QR-decomposition in visual updates. 
 
 ### 1.5  gnss_comm Library
 
-A wrapper for GNSS messages in ROS. See 
-
-[gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm)
-
-. The fantastic optimization-based work 
-
-[GVINS](https://github.com/HKUST-Aerial-Robotics/GVINS)
-
- also relies on this library. We reserve a copy of gnss_comm in this repo.
+A wrapper for GNSS messages in ROS. See [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm). The fantastic optimization-based work [GVINS](https://github.com/HKUST-Aerial-Robotics/GVINS) also relies on this library. We reserve a copy of gnss_comm in this repo.
 
 ## 2. Build InGVIO
 
@@ -161,17 +141,9 @@ Please modify or try other parameters if the above behaves not good. Good parame
 
 ## 5. Acknowledgements
 
-The realization of type-based index system in filter framework is inspired by 
+The realization of type-based index system in filter framework is inspired by [OpenVINS](https://github.com/rpng/open_vins). The author himself has learned lots of programming skills in SLAM by reading the codes of OpenVINS.
 
-[OpenVINS](https://github.com/rpng/open_vins)
-
-. The author himself has learned lots of programming skills in SLAM by reading the codes of OpenVINS.
-
-The 
-
-[gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm)
-
- provided by GVINS is a great wrapper in developing codes involving raw GNSS measurements in ROS.
+The [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm) provided by GVINS is a great wrapper in developing codes involving raw GNSS measurements in ROS.
 
 ## 6. License
 
