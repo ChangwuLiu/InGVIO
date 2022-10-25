@@ -2,19 +2,19 @@
 
 An invariant filter for visual-inertial-raw GNSS fusion.
 
-**Paper: ** InGVIO: A Consistent Invariant Filter For Fast and High-Accuracy GNSS-Visual-Inertial Odometry
+**Paper:** InGVIO: A Consistent Invariant Filter For Fast and High-Accuracy GNSS-Visual-Inertial Odometry
 
-**Paper Author: ** Changwu Liu, Chen Jiang and Haowen Wang
+**Paper Author:** Changwu Liu, Chen Jiang and Haowen Wang
 
-**Paper Status: ** Manuscript submitted to IEEE RA-L for possible publication. Preprint version available on ArXiv.
+**Paper Status:** Manuscript submitted to IEEE RA-L for possible publication. Preprint version available on ArXiv.
 
-**Current Paper Link: ** The pre-print version is available on ArXiv.
+**Current Paper Link:** The pre-print version is available on ArXiv.
 
 InGVIO is an invariant filter approach for fusion of monocular/stereo camera, IMU and raw GNSS measurements including pseudo ranges and Doppler shifts. InGVIO is intrinsically consistent under conditional infinitesimal invariance of the GNSS-Visual-Inertial system. InGVIO has the following key features: (a) fast due to decoupled IMU propagation, key-frame marginalization strategy and no SLAM-features; (b) accurate due to intrinsic consistency maintenance; (c) better convergence properties than 'naive' EKF-based filters.
 
 Moreover, we offer our fixed-wing datasets in the form of ROS Bags including stereo-visual, IMU and raw-GNSS measurements.
 
-**Fixed-Wing Dataset Link: ** Coming Soon.
+**Fixed-Wing Dataset Link:** Coming Soon.
 
 The links to the datasets will be continuously updated. The config files for this dataset are contained in the InGVIO code configuration in path 'config/fw_zed2i_f9p'.
 
@@ -28,7 +28,7 @@ The compiler should at least support c++14 standards.
 
 InGVIO is developed under 
 
-[ROS-Noetic]: http://wiki.ros.org/noetic/Installation/Ubuntu
+[ROS-Noetic](http://wiki.ros.org/noetic/Installation/Ubuntu)
 
  with its default OpenCV4 library. However, InGVIO should be working on ROS-Melodic with OpenCV3. In the future, we may add support to ROS 2.
 
@@ -36,7 +36,7 @@ InGVIO is developed under
 
 Eigen is a fantastic matrix computation library. InGVIO is developed under
 
-[Eigen3.3.7]: https://eigen.tuxfamily.org/index.php?title=Main_Page
+[Eigen3.3.7](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
 . Other Eigen 3 versions should be OK for InGVIO.
 
@@ -44,7 +44,7 @@ Eigen is a fantastic matrix computation library. InGVIO is developed under
 
 We use 
 
-[SuiteSparse]: https://github.com/DrTimothyAldenDavis/SuiteSparse/releases
+[SuiteSparse](https://github.com/DrTimothyAldenDavis/SuiteSparse/releases)
 
  Library for sparse QR-decomposition in visual updates. 
 
@@ -52,11 +52,11 @@ We use
 
 A wrapper for GNSS messages in ROS. See 
 
-[gnss_comm]: https://github.com/HKUST-Aerial-Robotics/gnss_comm
+[gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm)
 
 . The fantastic optimization-based work 
 
-[GVINS]: https://github.com/HKUST-Aerial-Robotics/GVINS
+[GVINS](https://github.com/HKUST-Aerial-Robotics/GVINS)
 
  also relies on this library. We reserve a copy of gnss_comm in this repo.
 
@@ -151,11 +151,11 @@ rosbag play urban_driving.bag --pause
 
 ### 4.2 Parameter Tuning Hints
 
-**For sports_field.bag: ** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.12, gnss_chi2_test = false, imu_buffer_size = 3000.
+**For sports_field.bag:** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.12, gnss_chi2_test = false, imu_buffer_size = 3000.
 
-**For urban_driving.bag: ** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.12, gnss_chi2_test = true, imu_buffer_size = 3000. To avoid polluted GNSS measurements, a stronger version could be gnss_chi2_test = false, gnss_strong_reject = true.
+**For urban_driving.bag:** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.12, gnss_chi2_test = true, imu_buffer_size = 3000. To avoid polluted GNSS measurements, a stronger version could be gnss_chi2_test = false, gnss_strong_reject = true.
 
-**For indoors_outdoors.bag: ** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.18, gnss_chi2_test = false, gnss_strong_reject = true. 
+**For indoors_outdoors.bag:** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.18, gnss_chi2_test = false, gnss_strong_reject = true. 
 
 Please modify or try other parameters if the above behaves not good. Good parameters may be different under different environment settings.
 
@@ -163,13 +163,13 @@ Please modify or try other parameters if the above behaves not good. Good parame
 
 The realization of type-based index system in filter framework is inspired by 
 
-[OpenVINS]: https://github.com/rpng/open_vins
+[OpenVINS](https://github.com/rpng/open_vins)
 
 . The author himself has learned lots of programming skills in SLAM by reading the codes of OpenVINS.
 
 The 
 
-[gnss_comm]: https://github.com/HKUST-Aerial-Robotics/gnss_comm
+[gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm)
 
  provided by GVINS is a great wrapper in developing codes involving raw GNSS measurements in ROS.
 
