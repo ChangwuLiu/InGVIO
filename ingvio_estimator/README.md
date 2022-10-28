@@ -8,13 +8,14 @@ An invariant filter for visual-inertial-raw GNSS fusion.
 
 **Paper Status:** Manuscript submitted to IEEE RA-L for possible publication. Preprint version available on ArXiv.
 
-**Current Paper Link:** The pre-print version is available on ArXiv.
+**Current Paper Link:** https://arxiv.org/abs/2210.15145
 
 InGVIO is an invariant filter approach for fusion of monocular/stereo camera, IMU and raw GNSS measurements including pseudo ranges and Doppler shifts. InGVIO is intrinsically consistent under conditional infinitesimal invariance of the GNSS-Visual-Inertial system. InGVIO has the following key features: (a) fast due to decoupled IMU propagation, key-frame marginalization strategy and no SLAM-features; (b) accurate due to intrinsic consistency maintenance; (c) better convergence properties than 'naive' EKF-based filters.
 
 Moreover, we offer our fixed-wing datasets in the form of ROS Bags including stereo-visual, IMU and raw-GNSS measurements.
 
-**Fixed-Wing Dataset Link:** Coming Soon.
+**Fixed-Wing Dataset Link:** https://cloud.tsinghua.edu.cn/d/4fd9b8a81e0f4186a722
+                             password to extract: lcw18_thu_uav
 
 The links to the datasets will be continuously updated. The config files for this dataset are contained in the InGVIO code configuration in path 'config/fw_zed2i_f9p'.
 
@@ -137,7 +138,7 @@ rosbag play urban_driving.bag --pause
 
 **For indoors_outdoors.bag:** Monocular/Stereo Case: max_pts_frame = 150/110, visual_noise = 0.18, gnss_chi2_test = false, gnss_strong_reject = true. 
 
-Please modify or try other parameters if the above behaves not good. Good parameters may be different under different environment settings.
+Please modify or try other parameters if the above behave not well. Good parameters may be different under different environment settings.
 
 ## 5. Acknowledgements
 
