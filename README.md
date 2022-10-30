@@ -16,6 +16,8 @@ Moreover, we offer our fixed-wing datasets in the form of ROS Bags including ste
 
 **Fixed-Wing Dataset Link:** https://cloud.tsinghua.edu.cn/d/4fd9b8a81e0f4186a722
                              password to extract: lcw18_thu_uav
+                            
+**Fixed-Wing Dataset Videos:** The videos are uploaded to the link that stores the fixed-wing datasets.
 
 The links to the datasets will be continuously updated. The config files for this dataset are contained in the InGVIO code configuration in path 'config/fw_zed2i_f9p'.
 
@@ -118,15 +120,15 @@ roslaunch ingvio_estimator ingvio_stereo_sf.launch
 To record the output topics, you can directly use our script file by:
 
 ```
-roslaunch ingvio_estimator ingvio_mono_fw_record.launch
-roslaunch ingvio_estimator ingvio_stereo_fw_record.launch
+roslaunch ingvio_estimator ingvio_mono_sf_record.launch
+roslaunch ingvio_estimator ingvio_stereo_sf_record.launch
 ```
 
 Rviz will be automatically launched. Run the ROS Bag to see the results:
 
 ```
 rosbag play sports_field.bag --pause
-rosbag play indoors_outdoors.bag --pause
+rosbag play complex_environment.bag --pause
 rosbag play urban_driving.bag --pause
 ```
 
